@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Multi-Chain</title>
+    <title>Sentinel DApp // Phase 4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root {
@@ -62,9 +62,9 @@
         .net-name { font-weight: bold; display: flex; align-items: center; }
         .balance-val { font-family: 'Consolas', monospace; color: var(--green); font-size: 18px; }
         
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 10px; display: inline-block; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 10px; display: inline-block; background: #333; }
         .online { background: var(--green); box-shadow: 0 0 8px var(--green); }
-        .offline { background: var(--red); }
+        .offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
 
         #walletAddr { font-family: monospace; color: var(--cyan); background: rgba(0,255,255,0.05); padding: 10px; border-radius: 4px; display: block; margin-top: 15px; font-size: 13px; word-break: break-all; }
     </style>
@@ -73,12 +73,12 @@
 
 <div class="container">
     <div class="header">
-        <h1 style="letter-spacing: 5px; color: var(--cyan);">SENTINEL DAPP // PHASE 3</h1>
-        <p style="color: #444;">MULTI-CHAIN ASSET MONITOR</p>
+        <h1 style="letter-spacing: 5px; color: var(--cyan);">SENTINEL DAPP // PHASE 4</h1>
+        <p style="color: #444;">ESTABILIZAÇÃO DE RPC & MULTI-SCAN</p>
     </div>
 
     <div class="card" style="text-align: center;">
-        <button onclick="connectAndScan()">Conectar e Escanear Carteira</button>
+        <button onclick="connectAndScan()">Conectar e Escanear Tudo</button>
         <span id="walletAddr">Aguardando comando...</span>
     </div>
 
@@ -119,28 +119,30 @@
 </div>
 
 <script>
+    // RPCs trocados para opções mais resilientes
     const networks = {
-        eth: { url: "wss://ethereum-rpc.publicnode.com", sym: "ETH" },
-        arb: { url: "https://arb1.arbitrum.io/rpc", sym: "ETH" },
-        bnb: { url: "https://binance.llamarpc.com", sym: "BNB" },
-        pol: { url: "https://polygon.llamarpc.com", sym: "POL" }
+        eth: { url: "https://ethereum.publicnode.com", sym: "ETH" },
+        arb: { url: "https://arbitrum.drpc.org", sym: "ETH" },
+        bnb: { url: "https://bsc-dataseed.binance.org", sym: "BNB" },
+        pol: { url: "https://polygon-rpc.com", sym: "POL" }
     };
+
+    // Função para dar um "respiro" entre as chamadas (anti-bloqueio)
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     async function connectAndScan() {
         if (!window.ethereum) return alert("Instale a MetaMask!");
 
         try {
-            // 1. Pega o endereço do usuário via MetaMask
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const userAddress = accounts[0];
             document.getElementById('walletAddr').innerText = userAddress;
 
-            // 2. Escaneia cada rede usando os RPCs (Independente da rede da MetaMask)
             for (const [id, net] of Object.entries(networks)) {
                 const balEl = document.getElementById(`bal-${id}`);
                 const dotEl = document.getElementById(`dot-${id}`);
                 
-                balEl.innerText = "Carregando...";
+                balEl.innerText = "Sincronizando...";
                 
                 try {
                     const provider = new ethers.JsonRpcProvider(net.url);
@@ -151,9 +153,12 @@
                     dotEl.className = "status-dot online";
                 } catch (err) {
                     console.error(`Erro na rede ${id}:`, err);
-                    balEl.innerText = "Erro RPC";
+                    balEl.innerText = "Erro (Time-out)";
                     dotEl.className = "status-dot offline";
                 }
+                
+                // Espera 500ms antes de pedir a próxima rede
+                await sleep(500);
             }
         } catch (error) {
             alert("Erro na conexão: " + error.message);
