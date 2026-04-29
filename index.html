@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 23</title>
+    <title>Sentinel DApp // Phase 24</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #1a1a2e; }
         body { background: var(--bg); color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { width: 100%; max-width: 1150px; margin: 0 auto; }
         
-        /* Layout preservado conforme solicitado */
         .top-nav { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-        .btn-auth { 
-            padding: 12px 30px; font-size: 14px; cursor: pointer; border-radius: 8px; 
-            font-weight: bold; text-transform: uppercase; transition: 0.3s; min-width: 220px;
-            border: 2px solid var(--cyan); background: transparent; color: var(--cyan);
-        }
+        .btn-auth { padding: 12px 30px; font-size: 14px; cursor: pointer; border-radius: 8px; font-weight: bold; text-transform: uppercase; transition: 0.3s; min-width: 220px; border: 2px solid var(--cyan); background: transparent; color: var(--cyan); }
         .btn-auth.mode-disconnect { border-color: var(--red); color: var(--red); }
         
         .card { background: var(--panel); border: 1px solid var(--gray); padding: 35px; border-radius: 20px; text-align: center; }
@@ -29,6 +24,7 @@
         td { padding: 20px 15px; border-bottom: 1px solid #111; color: #fff; }
 
         .rpc-select { background: #0d0d1a; color: var(--cyan); border: 1px solid #1a1a2e; padding: 8px; font-size: 11px; border-radius: 4px; width: 100%; max-width: 280px; }
+        .token-list { font-size: 11px; color: var(--green); list-style: none; padding: 0; margin: 0; }
         .badge { font-size: 11px; font-weight: bold; padding: 5px 10px; border-radius: 4px; background: #1a1a2e; color: #555; }
     </style>
 </head>
@@ -46,10 +42,11 @@
         <table>
             <thead>
                 <tr>
-                    <th>Rede (ChainList)</th>
-                    <th>Configurar RPC</th>
+                    <th>Rede</th>
+                    <th>RPC Ativo</th>
                     <th>Saldo Nativo</th>
-                    <th>Estado do Scan</th>
+                    <th>Tokens Detectados</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody id="netTable"></tbody>
@@ -58,13 +55,28 @@
 </div>
 
 <script>
-    // Agora usando o formato oficial de dados que você postou
+    // ABI Mínima para ler nome e saldo de qualquer token ERC-20
+    const ERC20_ABI = [
+        "function balanceOf(address owner) view returns (uint256)",
+        "function symbol() view returns (string)",
+        "function decimals() view returns (uint8)"
+    ];
+
+    // Lista de Contratos para monitorar (Exemplos principais)
+    const tokenWatchlist = [
+        { name: "USDT", address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", chains: [1] },
+        { name: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", chains: [1] },
+        { name: "USDT", address: "0x55d398326f99059fF775485246999027B3197955", chains: [56] },
+        { name: "USDC", address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", chains: [56] },
+        { name: "USDT", address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", chains: [137] }
+    ];
+
     const chainData = [
-        { name: "Ethereum", chainId: 1, symbol: "ETH", rpcs: ["https://eth.meowrpc.com", "https://1rpc.io/eth"] },
-        { name: "BNB Chain", chainId: 56, symbol: "BNB", rpcs: ["https://binance.llamarpc.com", "https://rpc.ankr.com/bsc"] },
-        { name: "Polygon", chainId: 137, symbol: "POL", rpcs: ["https://polygon-bor-rpc.publicnode.com", "https://1rpc.io/matic"] },
-        { name: "Arbitrum", chainId: 42161, symbol: "ETH", rpcs: ["https://arbitrum.llamarpc.com", "https://1rpc.io/arb"] },
-        { name: "FST Smart Chain", chainId: 2034, symbol: "FST", rpcs: ["https://mainnet.fenixst.io"] } // Adicionado conforme seu JSON
+        { name: "Ethereum", chainId: 1, symbol: "ETH", rpcs: ["https://eth.meowrpc.com"] },
+        { name: "BNB Chain", chainId: 56, symbol: "BNB", rpcs: ["https://bsc-dataseed1.binance.org"] },
+        { name: "Polygon", chainId: 137, symbol: "POL", rpcs: ["https://polygon-bor-rpc.publicnode.com"] },
+        { name: "Arbitrum", chainId: 42161, symbol: "ETH", rpcs: ["https://arbitrum.llamarpc.com"] },
+        { name: "FST Smart Chain", chainId: 2034, symbol: "FST", rpcs: ["https://mainnet.fenixst.io"] }
     ];
 
     let currentAccount = "";
@@ -80,7 +92,7 @@
                     currentAccount = "";
                     updateUI(false);
                 }
-            } catch (e) { alert("Erro na conexão"); }
+            } catch (e) { console.error(e); }
         }
     }
 
@@ -108,14 +120,11 @@
         const tbody = document.getElementById('netTable');
         tbody.innerHTML = chainData.map(c => `
             <tr>
-                <td><b style="color:var(--cyan)">${c.name}</b> <br><small style="color:#444">ID: ${c.chainId}</small></td>
-                <td>
-                    <select class="rpc-select" id="sel-${c.chainId}">
-                        ${c.rpcs.map(url => `<option value="${url}">${url}</option>`).join('')}
-                    </select>
-                </td>
+                <td><b style="color:var(--cyan)">${c.name}</b></td>
+                <td><select class="rpc-select" id="sel-${c.chainId}">${c.rpcs.map(url => `<option value="${url}">${url}</option>`).join('')}</select></td>
                 <td id="bal-${c.chainId}">---</td>
-                <td id="state-${c.chainId}"><span class="badge">PRONTO</span></td>
+                <td id="tokens-${c.chainId}"><ul class="token-list"></ul></td>
+                <td id="state-${c.chainId}"><span class="badge">AGUARDANDO</span></td>
             </tr>
         `).join('');
     }
@@ -123,25 +132,43 @@
     async function runSecurityScan() {
         const scanBtn = document.getElementById('scanBtn');
         scanBtn.disabled = true;
-        scanBtn.innerText = "LENDO BLOCKCHAIN...";
+        scanBtn.innerText = "VARRENDO ATIVOS...";
 
         for (const chain of chainData) {
             const rpc = document.getElementById(`sel-${chain.chainId}`).value;
             const stateEl = document.getElementById(`state-${chain.chainId}`);
-            stateEl.innerHTML = `<span class="badge" style="color:var(--cyan)">LENDO...</span>`;
+            const tokenEl = document.getElementById(`tokens-${chain.chainId}`).querySelector('ul');
             
+            stateEl.innerHTML = `<span class="badge" style="color:var(--cyan)">SCANNING...</span>`;
+            tokenEl.innerHTML = ""; // Limpa lista anterior
+
             try {
                 const provider = new ethers.JsonRpcProvider(rpc);
-                // Timeout de 6 segundos por rede
-                const bal = await Promise.race([
-                    provider.getBalance(currentAccount),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
-                ]);
                 
+                // 1. Saldo Nativo
+                const bal = await provider.getBalance(currentAccount);
                 document.getElementById(`bal-${chain.chainId}`).innerText = `${parseFloat(ethers.formatEther(bal)).toFixed(4)} ${chain.symbol}`;
-                stateEl.innerHTML = `<span style="color:var(--green); font-weight:bold;">✅ PROTEGIDO</span>`;
+
+                // 2. Scan de Tokens da Watchlist
+                for (const tConfig of tokenWatchlist) {
+                    if (tConfig.chains.includes(chain.chainId)) {
+                        const contract = new ethers.Contract(tConfig.address, ERC20_ABI, provider);
+                        const tBal = await contract.balanceOf(currentAccount);
+                        
+                        if (tBal > 0n) {
+                            const decimals = await contract.decimals();
+                            const symbol = await contract.symbol();
+                            const formatted = ethers.formatUnits(tBal, decimals);
+                            tokenEl.innerHTML += `<li>${parseFloat(formatted).toFixed(2)} ${symbol}</li>`;
+                        }
+                    }
+                }
+                
+                if(tokenEl.innerHTML === "") tokenEl.innerHTML = "<li style='color:#444'>Nenhum token detectado</li>";
+                stateEl.innerHTML = `<span style="color:var(--green); font-weight:bold;">✅ CONCLUÍDO</span>`;
+
             } catch (e) {
-                stateEl.innerHTML = `<span style="color:var(--red); font-weight:bold;">TIMEOUT / ERRO</span>`;
+                stateEl.innerHTML = `<span style="color:var(--red); font-weight:bold;">TIMEOUT</span>`;
             }
         }
         scanBtn.disabled = false;
