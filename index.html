@@ -6,41 +6,28 @@
     <title>Sentinel DApp // Phase 5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root {
-            --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff;
-            --green: #00ff88; --red: #ff3366; --gray: #222;
-        }
-        body {
-            background-color: var(--bg); color: white; font-family: 'Segoe UI', sans-serif;
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
-        }
-        .container { width: 100%; max-width: 1000px; }
-        .header { text-align: center; padding: 20px 0; border-bottom: 1px solid rgba(0, 255, 255, 0.1); margin-bottom: 30px; }
-        .card { background: var(--panel); border: 1px solid #1a1a2e; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        button { background: transparent; border: 2px solid var(--cyan); color: var(--cyan); padding: 12px 28px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        button:hover { background: var(--cyan); color: black; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; color: #555; font-size: 11px; text-transform: uppercase; padding: 10px; border-bottom: 1px solid var(--gray); }
-        td { padding: 15px 10px; border-bottom: 1px solid #111; }
-        .balance-val { font-family: 'Consolas', monospace; color: var(--green); font-size: 18px; }
-        .usd-val { color: #666; font-size: 14px; margin-left: 10px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: #333; }
+        :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; }
+        body { background: var(--bg); color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 800px; }
+        .card { background: var(--panel); border: 1px solid #1a1a2e; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        button { background: transparent; border: 2px solid var(--cyan); color: var(--cyan); padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        button:hover { background: var(--cyan); color: black; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        td, th { padding: 12px; text-align: left; border-bottom: 1px solid #111; }
+        .balance { font-family: monospace; color: var(--green); font-size: 1.1rem; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: #333; }
         .online { background: var(--green); box-shadow: 0 0 8px var(--green); }
-        .offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
-        #walletAddr { font-family: monospace; color: var(--cyan); background: rgba(0,255,255,0.05); padding: 10px; border-radius: 4px; display: block; margin-top: 15px; font-size: 12px; word-break: break-all; }
+        .offline { background: var(--red); }
+        #addr { font-size: 0.8rem; color: #555; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1 style="letter-spacing: 5px; color: var(--cyan);">SENTINEL DAPP // PHASE 5</h1>
-        <p style="color: #444;">REDUNDANCY ENGINE & LIVE PRICES</p>
-    </div>
-
-    <div class="card" style="text-align: center;">
-        <button onclick="connectAndScan()">Executar Scan Global</button>
-        <span id="walletAddr">Sistema em Standby...</span>
+    <div class="card">
+        <h2 style="color: var(--cyan); letter-spacing: 2px;">SENTINEL // PHASE 5</h2>
+        <button onclick="runScan()">ESCANEAR CARTEIRA</button>
+        <span id="addr">Não conectado</span>
     </div>
 
     <div class="card">
@@ -50,72 +37,55 @@
                     <th>Rede</th>
                     <th>Status</th>
                     <th>Saldo Nativo</th>
-                    <th>Valor (USD)</th>
                 </tr>
             </thead>
-            <tbody id="assetsTable">
-                <tr id="row-eth"><td>Ethereum</td><td><div class="status-dot" id="dot-eth"></div></td><td class="balance-val" id="bal-eth">0.0000 ETH</td><td id="usd-eth">--</td></tr>
-                <tr id="row-arb"><td>Arbitrum</td><td><div class="status-dot" id="dot-arb"></div></td><td class="balance-val" id="bal-arb">0.0000 ETH</td><td id="usd-arb">--</td></tr>
-                <tr id="row-bnb"><td>BNB Chain</td><td><div class="status-dot" id="dot-bnb"></div></td><td class="balance-val" id="bal-bnb">0.0000 BNB</td><td id="usd-bnb">--</td></tr>
-                <tr id="row-pol"><td>Polygon</td><td><div class="status-dot" id="dot-pol"></div></td><td class="balance-val" id="bal-pol">0.0000 POL</td><td id="usd-pol">--</td></tr>
+            <tbody>
+                <tr><td>Ethereum</td><td><div id="d-eth" class="dot"></div></td><td id="b-eth" class="balance">0.00</td></tr>
+                <tr><td>Arbitrum</td><td><div id="d-arb" class="dot"></div></td><td id="b-arb" class="balance">0.00</td></tr>
+                <tr><td>Binance Smart Chain</td><td><div id="d-bnb" class="dot"></div></td><td id="b-bnb" class="balance">0.00</td></tr>
+                <tr><td>Polygon</td><td><div id="d-pol" class="dot"></div></td><td id="b-pol" class="balance">0.00</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const networks = {
-        eth: { rpcs: ["https://rpc.ankr.com/eth", "https://ethereum.publicnode.com"], sym: "ETH", coingecko: "ethereum" },
-        arb: { rpcs: ["https://rpc.ankr.com/arbitrum", "https://arb1.arbitrum.io/rpc"], sym: "ETH", coingecko: "ethereum" },
-        bnb: { rpcs: ["https://rpc.ankr.com/bsc", "https://bsc-dataseed.binance.org"], sym: "BNB", coingecko: "binancecoin" },
-        pol: { rpcs: ["https://rpc.ankr.com/polygon", "https://polygon-rpc.com"], sym: "POL", coingecko: "matic-network" }
+    // Lista de RPCs Oficiais (Mais estáveis que Ankr/Llama)
+    const chains = {
+        eth: { rpc: "https://cloudflare-eth.com", sym: "ETH" },
+        arb: { rpc: "https://arb1.arbitrum.io/rpc", sym: "ETH" },
+        bnb: { rpc: "https://bsc-dataseed1.binance.org", sym: "BNB" },
+        pol: { rpc: "https://polygon-rpc.com", sym: "POL" }
     };
 
-    async function getPrice(id) {
+    async function runScan() {
+        if (!window.ethereum) return alert("Instale a MetaMask");
+        
         try {
-            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
-            const data = await res.json();
-            return data[id].usd;
-        } catch (e) { return 0; }
-    }
+            const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            document.getElementById('addr').innerText = accs[0];
 
-    async function tryGetBalance(rpcs, address) {
-        for (let url of rpcs) {
-            try {
-                const provider = new ethers.JsonRpcProvider(url);
-                return await Promise.race([
-                    provider.getBalance(address),
-                    new Promise((_, r) => setTimeout(() => r(), 4000))
-                ]);
-            } catch (e) { continue; }
-        }
-        throw new Error("All RPCs failed");
-    }
+            for (const [id, info] of Object.entries(chains)) {
+                const bEl = document.getElementById(`b-${id}`);
+                const dEl = document.getElementById(`d-${id}`);
+                bEl.innerText = "Sincronizando...";
 
-    async function connectAndScan() {
-        if (!window.ethereum) return alert("Instale a MetaMask!");
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const userAddress = accounts[0];
-        document.getElementById('walletAddr').innerText = userAddress;
-
-        for (const [id, net] of Object.entries(networks)) {
-            const balEl = document.getElementById(`bal-${id}`);
-            const dotEl = document.getElementById(`dot-${id}`);
-            const usdEl = document.getElementById(`usd-${id}`);
-            
-            try {
-                const balance = await tryGetBalance(net.rpcs, userAddress);
-                const ethVal = parseFloat(ethers.formatEther(balance));
-                const price = await getPrice(net.coingecko);
-                
-                balEl.innerText = `${ethVal.toFixed(4)} ${net.sym}`;
-                usdEl.innerText = ethVal > 0 ? `$${(ethVal * price).toFixed(2)}` : "$0.00";
-                dotEl.className = "status-dot online";
-            } catch (err) {
-                balEl.innerText = "Offline";
-                dotEl.className = "status-dot offline";
+                try {
+                    // Criamos o provider com um tempo de resposta limite (timeout)
+                    const provider = new ethers.JsonRpcProvider(info.rpc);
+                    const balance = await provider.getBalance(accs[0]);
+                    
+                    bEl.innerText = parseFloat(ethers.formatEther(balance)).toFixed(4) + " " + info.sym;
+                    dEl.className = "dot online";
+                } catch (e) {
+                    bEl.innerText = "Erro de Conexão";
+                    dEl.className = "dot offline";
+                }
+                // Delay de 600ms entre as redes para não ser bloqueado
+                await new Promise(r => setTimeout(r, 600));
             }
-            await new Promise(r => setTimeout(r, 400));
+        } catch (err) {
+            console.error(err);
         }
     }
 </script>
