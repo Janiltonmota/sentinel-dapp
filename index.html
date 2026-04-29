@@ -3,169 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Chainlist Engine</title>
+    <title>Sentinel DApp // Phase 9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #222; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 900px; }
-        .card { background: var(--panel); border: 1px solid #1a1a2e; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #1a1a2e; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
         
-        button { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 8px 15px; cursor: pointer; font-size: 11px; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
-        button:hover { background: var(--cyan); color: black; }
-        .btn-main { padding: 15px 30px; font-size: 14px; border-width: 2px; display: block; margin: 0 auto 15px; }
+        .container { width: 100%; max-width: 1100px; margin: 0 auto; }
+        
+        /* Stats Panel */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--panel); border: 1px solid var(--gray); padding: 20px; border-radius: 12px; text-align: center; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--cyan); }
+        .stat-label { color: #555; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 24px; font-weight: bold; color: var(--green); margin-top: 5px; font-family: 'Consolas', monospace; }
+
+        .card { background: var(--panel); border: 1px solid var(--gray); padding: 25px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
+        
+        button { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.3s; }
+        button:hover { background: var(--cyan); color: black; box-shadow: 0 0 15px var(--cyan); }
+        .btn-main { padding: 15px 40px; font-size: 16px; margin: 0 auto 20px; display: block; }
 
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #555; font-size: 11px; padding: 10px; text-transform: uppercase; border-bottom: 1px solid var(--gray); }
-        td { padding: 15px 10px; border-bottom: 1px solid #111; }
+        th { text-align: left; color: #444; font-size: 11px; padding: 15px; border-bottom: 1px solid #222; }
+        td { padding: 20px 15px; border-bottom: 1px solid #111; vertical-align: top; }
 
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: #333; margin-right: 5px; }
-        .online { background: var(--green); box-shadow: 0 0 8px var(--green); }
-        .offline { background: var(--red); }
+        .net-info { display: flex; align-items: center; gap: 10px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #333; }
+        .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
         
-        .balance { font-family: monospace; color: var(--green); font-size: 1.1rem; }
-        
-        /* Modal Estilo Chainlist */
-        #rpcModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0d0d14; border: 1px solid var(--cyan); padding: 25px; z-index: 100; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
-        .rpc-item { background: #161625; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
-        .rpc-url { font-size: 11px; color: #aaa; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; }
-        .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 50; }
-        .loader { font-size: 12px; color: var(--cyan); text-align: center; padding: 20px; }
+        .balance-box { margin-bottom: 10px; }
+        .native-amt { font-size: 18px; color: white; font-family: monospace; }
+        .usd-amt { color: #555; font-size: 13px; margin-left: 8px; }
+
+        .token-tag { display: inline-block; background: #161625; padding: 4px 10px; border-radius: 4px; font-size: 11px; margin: 4px 4px 0 0; border: 1px solid #222; }
+        .token-tag b { color: var(--cyan); }
+
+        #walletAddr { font-family: monospace; color: #444; font-size: 11px; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="overlay" id="overlay" onclick="closeModal()"></div>
-<div id="rpcModal">
-    <h3 id="modalTitle" style="color: var(--cyan); margin-top: 0; border-bottom: 1px solid #222; padding-bottom: 10px;">RPC Server List</h3>
-    <div id="rpcList"></div>
-    <button onclick="closeModal()" style="width: 100%; margin-top: 15px; border-color: #444; color: #888;">Fechar</button>
-</div>
-
 <div class="container">
-    <div class="card">
-        <h2 style="text-align: center; color: var(--cyan); letter-spacing: 4px; margin-bottom: 20px;">SENTINEL // CHAINLIST ENGINE</h2>
-        <button class="btn-main" onclick="scanAll()">CONECTAR E ESCANEAR</button>
-        <div id="walletDisplay" style="font-size: 11px; color: #444; text-align: center; font-family: monospace;">Aguardando MetaMask...</div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Net Worth Estimado</div>
+            <div class="stat-value" id="totalUSD">$0.00</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Redes Ativas</div>
+            <div class="stat-value" id="activeNets">0/4</div>
+        </div>
     </div>
 
     <div class="card">
+        <button class="btn-main" onclick="startGlobalScan()">EXECUTAR SCAN FULL</button>
+        <div id="walletAddr">Aguardando Conexão...</div>
+        
         <table>
             <thead>
                 <tr>
-                    <th>Rede (Chain ID)</th>
-                    <th>Status</th>
-                    <th>Saldo Nativo</th>
-                    <th>Configuração</th>
+                    <th>NETWORK</th>
+                    <th>STATUS</th>
+                    <th>NATIVE ASSET</th>
+                    <th>ERC-20 TOKENS</th>
+                    <th>OPÇÕES</th>
                 </tr>
             </thead>
-            <tbody id="tableBody"></tbody>
+            <tbody id="mainTable">
+                <!-- Preenchido via JS -->
+            </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // Configurações das redes que queremos monitorar
-    const monitoredChains = [
-        { id: '1', name: "Ethereum", sym: "ETH", chainId: 1 },
-        { id: '42161', name: "Arbitrum", sym: "ETH", chainId: 42161 },
-        { id: '56', name: "BNB Chain", sym: "BNB", chainId: 56 },
-        { id: '137', name: "Polygon", sym: "POL", chainId: 137 }
-    ];
+    const ERC20_ABI = ["function balanceOf(address owner) view returns (uint256)", "function decimals() view returns (uint8)"];
+    
+    const config = {
+        chains: [
+            { id: '1', name: "Ethereum", sym: "ETH", cgId: "ethereum", tokens: { USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7", USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" } },
+            { id: '56', name: "BNB Chain", sym: "BNB", cgId: "binancecoin", tokens: { USDT: "0x55d398326f99059fF775485246999027B3197955", BUSD: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56" } },
+            { id: '137', name: "Polygon", sym: "POL", cgId: "matic-network", tokens: { USDT: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", USDC: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359" } },
+            { id: '42161', name: "Arbitrum", sym: "ETH", cgId: "ethereum", tokens: { USDT: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", USDC: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" } }
+        ],
+        prices: {}
+    };
 
-    let userAccount = "";
-    let activeRPCs = {}; // Armazena o RPC atual de cada rede
+    let userAddress = "";
+    let totalBalanceUSD = 0;
+
+    async function fetchPrices() {
+        try {
+            const ids = config.chains.map(c => c.cgId).join(',');
+            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids},tether,usd-coin,binance-usd&vs_currencies=usd`);
+            config.prices = await res.json();
+        } catch (e) { console.error("Erro preços"); }
+    }
 
     function init() {
-        const tbody = document.getElementById('tableBody');
-        monitoredChains.forEach(chain => {
-            // Define um RPC padrão inicial
-            activeRPCs[chain.id] = ""; 
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${chain.name}</strong> <span style="font-size:10px; color:#444;">(${chain.chainId})</span></td>
-                    <td><div id="dot-${chain.id}" class="dot"></div></td>
-                    <td id="bal-${chain.id}" class="balance">---</td>
-                    <td><button onclick="openChainlistModal('${chain.id}', ${chain.chainId})">ESCOLHER RPC</button></td>
-                </tr>
-            `;
-        });
+        const table = document.getElementById('mainTable');
+        table.innerHTML = config.chains.map(c => `
+            <tr>
+                <td><div class="net-info"><strong>${c.name}</strong></div></td>
+                <td><div id="dot-${c.id}" class="dot"></div></td>
+                <td>
+                    <div class="native-amt" id="bal-${c.id}">0.00 ${c.sym}</div>
+                    <div class="usd-amt" id="usd-bal-${c.id}">$0.00</div>
+                </td>
+                <td id="tokens-${c.id}"><span style="color:#222">---</span></td>
+                <td><button onclick="alert('Chainlist integration em breve aqui')">RPC</button></td>
+            </tr>
+        `).join('');
     }
 
-    async function scanAll() {
-        if (!window.ethereum) return alert("Instale a MetaMask");
+    async function startGlobalScan() {
+        if (!window.ethereum) return alert("MetaMask?");
         const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        userAccount = accs[0];
-        document.getElementById('walletDisplay').innerText = `WALLET: ${userAccount}`;
+        userAddress = accs[0];
+        document.getElementById('walletAddr').innerText = `CONECTADO: ${userAddress}`;
         
-        for (const chain of monitoredChains) {
-            updateBalance(chain.id);
-        }
-    }
-
-    async function updateBalance(id) {
-        const chainInfo = monitoredChains.find(c => c.id === id);
-        const bEl = document.getElementById(`bal-${id}`);
-        const dEl = document.getElementById(`dot-${id}`);
+        totalBalanceUSD = 0;
+        await fetchPrices();
         
-        // Se não houver RPC selecionado, tenta pegar o primeiro da lista da chainlist automaticamente
-        if (!activeRPCs[id]) {
-            const rpcs = await fetchRPCs(chainInfo.chainId);
-            activeRPCs[id] = rpcs[0];
+        let activeCount = 0;
+        for (const chain of config.chains) {
+            const success = await scanChain(chain);
+            if (success) activeCount++;
+            await new Promise(r => setTimeout(r, 400));
         }
+        
+        document.getElementById('totalUSD').innerText = `$${totalBalanceUSD.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        document.getElementById('activeNets').innerText = `${activeCount}/${config.chains.length}`;
+    }
 
+    async function scanChain(chain) {
         try {
-            const provider = new ethers.JsonRpcProvider(activeRPCs[id]);
-            const balance = await provider.getBalance(userAccount);
-            bEl.innerText = `${parseFloat(ethers.formatEther(balance)).toFixed(4)} ${chainInfo.sym}`;
-            dEl.className = "dot online";
+            // Busca RPC dinâmico da Chainlist se não houver um fixo
+            const rpcResponse = await fetch('https://chainid.network/chains.json');
+            const allChains = await rpcResponse.json();
+            const chainData = allChains.find(c => c.chainId == chain.id);
+            const rpcUrl = chainData.rpc.find(url => url.startsWith('https') && !url.includes('${'));
+
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            
+            // Native Balance
+            const balance = await provider.getBalance(userAddress);
+            const ethAmt = parseFloat(ethers.formatEther(balance));
+            const price = config.prices[chain.cgId]?.usd || 0;
+            const usdValue = ethAmt * price;
+            totalBalanceUSD += usdValue;
+
+            document.getElementById(`bal-${chain.id}`).innerText = `${ethAmt.toFixed(4)} ${chain.sym}`;
+            document.getElementById(`usd-bal-${chain.id}`).innerText = `$${usdValue.toFixed(2)}`;
+            document.getElementById(`dot-${chain.id}`).className = "dot online";
+
+            // Tokens Scan
+            const tokenContainer = document.getElementById(`tokens-${chain.id}`);
+            tokenContainer.innerHTML = "";
+            
+            for (const [symbol, address] of Object.entries(chain.tokens)) {
+                try {
+                    const contract = new ethers.Contract(address, ERC20_ABI, provider);
+                    const tBal = await contract.balanceOf(userAddress);
+                    const decimals = symbol.includes('USD') ? 6 : 18;
+                    const formatted = parseFloat(ethers.formatUnits(tBal, decimals));
+
+                    if (formatted > 0.01) {
+                        const tPrice = config.prices[symbol.toLowerCase()]?.usd || 1;
+                        totalBalanceUSD += (formatted * tPrice);
+                        tokenContainer.innerHTML += `<div class="token-tag"><b>${symbol}:</b> ${formatted.toFixed(2)}</div>`;
+                    }
+                } catch (e) { }
+            }
+            if (!tokenContainer.innerHTML) tokenContainer.innerHTML = "<span style='color:#333'>Vazio</span>";
+            
+            return true;
         } catch (e) {
-            bEl.innerText = "RPC Offline";
-            dEl.className = "dot offline";
+            document.getElementById(`dot-${chain.id}`).className = "dot";
+            return false;
         }
-    }
-
-    async function fetchRPCs(chainId) {
-        try {
-            const response = await fetch('https://chainid.network/chains.json');
-            const data = await response.json();
-            const chainData = data.find(c => c.chainId === chainId);
-            // Filtra apenas RPCs https (ignora wss e placeholders com $)
-            return chainData.rpc.filter(url => url.startsWith('https') && !url.includes('${'));
-        } catch (e) {
-            return [];
-        }
-    }
-
-    async function openChainlistModal(id, chainId) {
-        document.getElementById('rpcModal').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-        const list = document.getElementById('rpcList');
-        list.innerHTML = `<div class="loader">Buscando nós no Chainlist...</div>`;
-
-        const rpcs = await fetchRPCs(chainId);
-        list.innerHTML = "";
-
-        rpcs.slice(0, 8).forEach(url => {
-            const item = document.createElement('div');
-            item.className = 'rpc-item';
-            item.innerHTML = `
-                <div class="rpc-url">${url}</div>
-                <button onclick="selectAndTestRPC('${id}', '${url}')">CONECTAR</button>
-            `;
-            list.appendChild(item);
-        });
-    }
-
-    function selectAndTestRPC(id, url) {
-        activeRPCs[id] = url;
-        closeModal();
-        updateBalance(id);
-    }
-
-    function closeModal() {
-        document.getElementById('rpcModal').style.display = 'none';
-        document.getElementById('overlay').style.display = 'none';
     }
 
     init();
