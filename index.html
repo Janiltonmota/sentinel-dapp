@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 4</title>
+    <title>Sentinel DApp // Chainlist RPC</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root {
@@ -73,8 +73,8 @@
 
 <div class="container">
     <div class="header">
-        <h1 style="letter-spacing: 5px; color: var(--cyan);">SENTINEL DAPP // PHASE 4</h1>
-        <p style="color: #444;">ESTABILIZAÇÃO DE RPC & MULTI-SCAN</p>
+        <h1 style="letter-spacing: 5px; color: var(--cyan);">SENTINEL DAPP // PHASE 4.1</h1>
+        <p style="color: #444;">CHAINLIST VERIFIED RPCs</p>
     </div>
 
     <div class="card" style="text-align: center;">
@@ -119,16 +119,32 @@
 </div>
 
 <script>
-    // RPCs trocados para opções mais resilientes
+    // RPCs extraídos da Chainlist.org (os mais estáveis/públicos)
     const networks = {
-        eth: { url: "https://ethereum.publicnode.com", sym: "ETH" },
-        arb: { url: "https://arbitrum.drpc.org", sym: "ETH" },
-        bnb: { url: "https://bsc-dataseed.binance.org", sym: "BNB" },
-        pol: { url: "https://polygon-rpc.com", sym: "POL" }
+        eth: { url: "https://rpc.ankr.com/eth", sym: "ETH" },
+        arb: { url: "https://rpc.ankr.com/arbitrum", sym: "ETH" },
+        bnb: { url: "https://rpc.ankr.com/bsc", sym: "BNB" },
+        pol: { url: "https://rpc.ankr.com/polygon", sym: "POL" }
     };
 
-    // Função para dar um "respiro" entre as chamadas (anti-bloqueio)
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    async function getBalanceWithRetry(url, address, retries = 2) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const provider = new ethers.JsonRpcProvider(url);
+                // Timeout de 5 segundos para cada tentativa
+                const balance = await Promise.race([
+                    provider.getBalance(address),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                ]);
+                return balance;
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                await sleep(1000); // Espera 1s antes de tentar de novo
+            }
+        }
+    }
 
     async function connectAndScan() {
         if (!window.ethereum) return alert("Instale a MetaMask!");
@@ -142,23 +158,21 @@
                 const balEl = document.getElementById(`bal-${id}`);
                 const dotEl = document.getElementById(`dot-${id}`);
                 
-                balEl.innerText = "Sincronizando...";
+                balEl.innerText = "Consultando...";
                 
                 try {
-                    const provider = new ethers.JsonRpcProvider(net.url);
-                    const balance = await provider.getBalance(userAddress);
+                    const balance = await getBalanceWithRetry(net.url, userAddress);
                     const formatted = parseFloat(ethers.formatEther(balance)).toFixed(4);
                     
                     balEl.innerText = `${formatted} ${net.sym}`;
                     dotEl.className = "status-dot online";
                 } catch (err) {
-                    console.error(`Erro na rede ${id}:`, err);
-                    balEl.innerText = "Erro (Time-out)";
+                    console.error(`Falha final na rede ${id}:`, err);
+                    balEl.innerText = "Erro RPC";
                     dotEl.className = "status-dot offline";
                 }
                 
-                // Espera 500ms antes de pedir a próxima rede
-                await sleep(500);
+                await sleep(300); // Pequeno intervalo para não ser banido por spam
             }
         } catch (error) {
             alert("Erro na conexão: " + error.message);
