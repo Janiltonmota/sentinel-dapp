@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 6</title>
+    <title>Sentinel DApp // Chainlist Engine</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #222; }
@@ -15,144 +15,152 @@
         button:hover { background: var(--cyan); color: black; }
         .btn-main { padding: 15px 30px; font-size: 14px; border-width: 2px; display: block; margin: 0 auto 15px; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; color: #555; font-size: 12px; padding: 10px; border-bottom: 1px solid var(--gray); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #555; font-size: 11px; padding: 10px; text-transform: uppercase; border-bottom: 1px solid var(--gray); }
         td { padding: 15px 10px; border-bottom: 1px solid #111; }
 
         .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: #333; margin-right: 5px; }
         .online { background: var(--green); box-shadow: 0 0 8px var(--green); }
-        .offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
+        .offline { background: var(--red); }
         
         .balance { font-family: monospace; color: var(--green); font-size: 1.1rem; }
         
-        /* Modal Style */
-        #rpcModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0d0d14; border: 2px solid var(--cyan); padding: 30px; z-index: 100; border-radius: 15px; width: 400px; box-shadow: 0 0 50px rgba(0,0,0,0.9); }
-        .rpc-option { display: block; width: 100%; text-align: left; background: #1a1a2e; border: 1px solid #333; color: #ccc; padding: 10px; margin: 10px 0; cursor: pointer; font-size: 12px; border-radius: 5px; }
-        .rpc-option:hover { border-color: var(--cyan); color: white; }
-        .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 50; }
+        /* Modal Estilo Chainlist */
+        #rpcModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0d0d14; border: 1px solid var(--cyan); padding: 25px; z-index: 100; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        .rpc-item { background: #161625; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .rpc-url { font-size: 11px; color: #aaa; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; }
+        .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 50; }
+        .loader { font-size: 12px; color: var(--cyan); text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
 
 <div class="overlay" id="overlay" onclick="closeModal()"></div>
 <div id="rpcModal">
-    <h3 id="modalTitle" style="color: var(--cyan); margin-top: 0;">Selecionar RPC</h3>
+    <h3 id="modalTitle" style="color: var(--cyan); margin-top: 0; border-bottom: 1px solid #222; padding-bottom: 10px;">RPC Server List</h3>
     <div id="rpcList"></div>
-    <button onclick="closeModal()" style="border-color: #555; color: #555; width: 100%; margin-top: 10px;">Cancelar</button>
+    <button onclick="closeModal()" style="width: 100%; margin-top: 15px; border-color: #444; color: #888;">Fechar</button>
 </div>
 
 <div class="container">
     <div class="card">
-        <h2 style="text-align: center; color: var(--cyan); letter-spacing: 4px; margin-bottom: 25px;">SENTINEL // PHASE 6</h2>
-        <button class="btn-main" onclick="scanAll()">ESCANEAR TODAS AS REDES</button>
-        <div id="walletDisplay" style="font-size: 12px; color: #444; text-align: center; font-family: monospace;">Aguardando conexão...</div>
+        <h2 style="text-align: center; color: var(--cyan); letter-spacing: 4px; margin-bottom: 20px;">SENTINEL // CHAINLIST ENGINE</h2>
+        <button class="btn-main" onclick="scanAll()">CONECTAR E ESCANEAR</button>
+        <div id="walletDisplay" style="font-size: 11px; color: #444; text-align: center; font-family: monospace;">Aguardando MetaMask...</div>
     </div>
 
     <div class="card">
         <table>
             <thead>
                 <tr>
-                    <th>Rede</th>
+                    <th>Rede (Chain ID)</th>
                     <th>Status</th>
                     <th>Saldo Nativo</th>
-                    <th>Ação</th>
+                    <th>Configuração</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-                <!-- As linhas serão geradas via JS para facilitar a manutenção -->
-            </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const chains = {
-        eth: { 
-            name: "Ethereum", sym: "ETH", currentIdx: 0,
-            rpcs: ["https://cloudflare-eth.com", "https://rpc.ankr.com/eth", "https://ethereum.publicnode.com"]
-        },
-        arb: { 
-            name: "Arbitrum", sym: "ETH", currentIdx: 0,
-            rpcs: ["https://arb1.arbitrum.io/rpc", "https://rpc.ankr.com/arbitrum", "https://arbitrum.drpc.org"]
-        },
-        bnb: { 
-            name: "BNB Chain", sym: "BNB", currentIdx: 0,
-            rpcs: ["https://bsc-dataseed.binance.org", "https://rpc.ankr.com/bsc", "https://binance.llamarpc.com"]
-        },
-        pol: { 
-            name: "Polygon", sym: "POL", currentIdx: 0,
-            rpcs: ["https://polygon-rpc.com", "https://rpc.ankr.com/polygon", "https://polygon.llamarpc.com"]
-        }
-    };
+    // Configurações das redes que queremos monitorar
+    const monitoredChains = [
+        { id: '1', name: "Ethereum", sym: "ETH", chainId: 1 },
+        { id: '42161', name: "Arbitrum", sym: "ETH", chainId: 42161 },
+        { id: '56', name: "BNB Chain", sym: "BNB", chainId: 56 },
+        { id: '137', name: "Polygon", sym: "POL", chainId: 137 }
+    ];
 
     let userAccount = "";
+    let activeRPCs = {}; // Armazena o RPC atual de cada rede
 
-    // Iniciar Tabela
-    function initTable() {
+    function init() {
         const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = "";
-        for (const id in chains) {
+        monitoredChains.forEach(chain => {
+            // Define um RPC padrão inicial
+            activeRPCs[chain.id] = ""; 
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${chains[id].name}</strong></td>
-                    <td><div id="dot-${id}" class="dot"></div></td>
-                    <td id="bal-${id}" class="balance">---</td>
-                    <td><button onclick="openModal('${id}')">TROCAR RPC</button></td>
+                    <td><strong>${chain.name}</strong> <span style="font-size:10px; color:#444;">(${chain.chainId})</span></td>
+                    <td><div id="dot-${chain.id}" class="dot"></div></td>
+                    <td id="bal-${chain.id}" class="balance">---</td>
+                    <td><button onclick="openChainlistModal('${chain.id}', ${chain.chainId})">ESCOLHER RPC</button></td>
                 </tr>
             `;
-        }
-    }
-
-    async function scanSingle(id) {
-        if (!userAccount) return;
-        const bEl = document.getElementById(`bal-${id}`);
-        const dEl = document.getElementById(`dot-${id}`);
-        const info = chains[id];
-        const rpcUrl = info.rpcs[info.currentIdx];
-
-        bEl.innerText = "Lendo...";
-        try {
-            const provider = new ethers.JsonRpcProvider(rpcUrl);
-            const balance = await provider.getBalance(userAccount);
-            bEl.innerText = `${parseFloat(ethers.formatEther(balance)).toFixed(4)} ${info.sym}`;
-            dEl.className = "dot online";
-        } catch (e) {
-            bEl.innerText = "Erro RPC";
-            dEl.className = "dot offline";
-        }
+        });
     }
 
     async function scanAll() {
         if (!window.ethereum) return alert("Instale a MetaMask");
         const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
         userAccount = accs[0];
-        document.getElementById('walletDisplay').innerText = `Wallet: ${userAccount}`;
+        document.getElementById('walletDisplay').innerText = `WALLET: ${userAccount}`;
         
-        for (const id in chains) {
-            await scanSingle(id);
-            await new Promise(r => setTimeout(r, 300));
+        for (const chain of monitoredChains) {
+            updateBalance(chain.id);
         }
     }
 
-    function openModal(id) {
-        const info = chains[id];
-        document.getElementById('modalTitle').innerText = `RPCs para ${info.name}`;
-        const list = document.getElementById('rpcList');
-        list.innerHTML = "";
+    async function updateBalance(id) {
+        const chainInfo = monitoredChains.find(c => c.id === id);
+        const bEl = document.getElementById(`bal-${id}`);
+        const dEl = document.getElementById(`dot-${id}`);
         
-        info.rpcs.forEach((url, index) => {
-            const isCurrent = index === info.currentIdx ? " (Ativo)" : "";
-            list.innerHTML += `<button class="rpc-option" onclick="selectRpc('${id}', ${index})">${url}${isCurrent}</button>`;
-        });
+        // Se não houver RPC selecionado, tenta pegar o primeiro da lista da chainlist automaticamente
+        if (!activeRPCs[id]) {
+            const rpcs = await fetchRPCs(chainInfo.chainId);
+            activeRPCs[id] = rpcs[0];
+        }
 
-        document.getElementById('rpcModal').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
+        try {
+            const provider = new ethers.JsonRpcProvider(activeRPCs[id]);
+            const balance = await provider.getBalance(userAccount);
+            bEl.innerText = `${parseFloat(ethers.formatEther(balance)).toFixed(4)} ${chainInfo.sym}`;
+            dEl.className = "dot online";
+        } catch (e) {
+            bEl.innerText = "RPC Offline";
+            dEl.className = "dot offline";
+        }
     }
 
-    function selectRpc(id, index) {
-        chains[id].currentIdx = index;
+    async function fetchRPCs(chainId) {
+        try {
+            const response = await fetch('https://chainid.network/chains.json');
+            const data = await response.json();
+            const chainData = data.find(c => c.chainId === chainId);
+            // Filtra apenas RPCs https (ignora wss e placeholders com $)
+            return chainData.rpc.filter(url => url.startsWith('https') && !url.includes('${'));
+        } catch (e) {
+            return [];
+        }
+    }
+
+    async function openChainlistModal(id, chainId) {
+        document.getElementById('rpcModal').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+        const list = document.getElementById('rpcList');
+        list.innerHTML = `<div class="loader">Buscando nós no Chainlist...</div>`;
+
+        const rpcs = await fetchRPCs(chainId);
+        list.innerHTML = "";
+
+        rpcs.slice(0, 8).forEach(url => {
+            const item = document.createElement('div');
+            item.className = 'rpc-item';
+            item.innerHTML = `
+                <div class="rpc-url">${url}</div>
+                <button onclick="selectAndTestRPC('${id}', '${url}')">CONECTAR</button>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function selectAndTestRPC(id, url) {
+        activeRPCs[id] = url;
         closeModal();
-        scanSingle(id);
+        updateBalance(id);
     }
 
     function closeModal() {
@@ -160,7 +168,7 @@
         document.getElementById('overlay').style.display = 'none';
     }
 
-    initTable();
+    init();
 </script>
 </body>
 </html>
