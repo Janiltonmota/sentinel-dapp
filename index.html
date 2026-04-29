@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sentinel DApp - Phase 2 (Full)</title>
+    <!-- Importando a Ethers.js v6 via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #020205;
+            --panel: #0a0a0f;
+            --cyan: #00ffff;
+            --red: #ff3366;
+            --green: #00ff88;
+            --grid: rgba(0, 255, 255, 0.03);
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        h1 { font-size: 20px; letter-spacing: 5px; color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+
+        .wallet-section {
+            background: var(--panel);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .network-card {
+            background: var(--panel);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .indicator {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background-color: #333;
+        }
+
+        .online { background-color: var(--green); box-shadow: 0 0 10px var(--green); }
+        .offline { background-color: var(--red); box-shadow: 0 0 10px var(--red); }
+
+        button {
+            background: transparent;
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        button:hover { background: rgba(0, 255, 255, 0.1); box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+
+        #walletAddr { font-family: 'Consolas', monospace; color: var(--green); margin-left: 15px; }
+        #balanceDisplay { font-size: 28px; margin-top: 15px; font-weight: 300; }
+        
+        .log-box {
+            background: #000;
+            padding: 10px;
+            font-size: 11px;
+            color: #555;
+            border-radius: 4px;
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid #111;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>SENTINEL DAPP // PHASE 2</h1>
+
+    <div class="wallet-section">
+        <button onclick="connectWallet()">Conectar Carteira</button>
+        <span id="walletAddr">Aguardando conexão...</span>
+        <div id="balanceDisplay">0.00 <span style="font-size: 14px; color: #444;">NATIVO</span></div>
+    </div>
+
+    <div class="status-grid">
+        <div class="network-card"><span>ETHEREUM</span><div id="eth-status" class="indicator"></div></div>
+        <div class="network-card"><span>ARBITRUM</span><div id="arb-status" class="indicator"></div></div>
+        <div class="network-card"><span>BINANCE</span><div id="bnb-status" class="indicator"></div></div>
+        <div class="network-card"><span>POLYGON</span><div id="pol-status" class="indicator"></div></div>
+    </div>
+
+    <div class="log-box" id="logBox">SISTEMA PRONTO. Abra via Live Server para evitar erros de protocolo.</div>
+
+    <script>
+        const networks = {
+            eth: "https://eth.llamarpc.com",
+            arb: "https://arb1.arbitrum.io/rpc",
+            bnb: "https://binance.llamarpc.com",
+            pol: "https://polygon.llamarpc.com"
+        };
+
+        function addLog(msg) {
+            const logBox = document.getElementById('logBox');
+            logBox.innerHTML += `<br>> ${msg}`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        async function connectWallet() {
+            addLog("Iniciando tentativa de conexão...");
+
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    
+                    // Solicita contas
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const address = accounts[0];
+                    
+                    document.getElementById('walletAddr').innerText = `ID: ${address.substring(0,6)}...${address.substring(38)}`;
+                    addLog("Carteira conectada com sucesso.");
+
+                    // Buscar saldo
+                    const balanceWei = await provider.getBalance(address);
+                    const balanceEth = ethers.formatEther(balanceWei);
+                    
+                    // Identificar Moeda
+                    const network = await provider.getNetwork();
+                    let symbol = "ETH";
+                    if (network.chainId == 56n) symbol = "BNB";
+                    if (network.chainId == 137n) symbol = "POL";
+
+                    document.getElementById('balanceDisplay').innerHTML = `${parseFloat(balanceEth).toFixed(4)} <span style="font-size: 14px; color: var(--cyan);">${symbol}</span>`;
+                    addLog(`Saldo recuperado: ${balanceEth} ${symbol}`);
+
+                } catch (error) {
+                    addLog(`ERRO: ${error.message}`);
+                    console.error(error);
+                }
+            } else {
+                addLog("ERRO: MetaMask não detectada.");
+                alert("MetaMask não encontrada. Se você estiver usando o arquivo localmente, abra via 'Live Server' no VS Code.");
+            }
+        }
+
+        async function checkNetworks() {
+            addLog("Escaneando latência das redes...");
+            for (const [name, url] of Object.entries(networks)) {
+                const statusCircle = document.getElementById(`${name}-status`);
+                try {
+                    const provider = new ethers.JsonRpcProvider(url);
+                    await provider.getBlockNumber();
+                    statusCircle.className = "indicator online";
+                    addLog(`Rede ${name.toUpperCase()} Online.`);
+                } catch (e) {
+                    statusCircle.className = "indicator offline";
+                    addLog(`Rede ${name.toUpperCase()} Offline ou RPC instável.`);
+                }
+            }
+        }
+
+        // Inicia o check das redes automaticamente
+        checkNetworks();
+    </script>
+</body>
+</html>
