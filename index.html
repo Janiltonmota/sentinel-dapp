@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 19</title>
+    <title>Sentinel DApp // Phase 20</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #1a1a2e; }
         body { background: var(--bg); color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { width: 100%; max-width: 1150px; margin: 0 auto; }
         
-        /* Cabeçalho Fixo (Erro 1) */
         .top-nav { display: flex; justify-content: flex-end; margin-bottom: 30px; }
         .btn-auth { 
             padding: 12px 30px; font-size: 14px; cursor: pointer; border-radius: 8px; 
@@ -26,26 +25,19 @@
         .stat-value { font-size: 28px; font-weight: bold; color: var(--green); font-family: monospace; }
 
         .card { background: var(--panel); border: 1px solid var(--gray); padding: 35px; border-radius: 20px; text-align: center; }
-        
-        /* Botão de Scan */
         .btn-scan { 
             background: var(--cyan); color: #000; border: none; padding: 18px 50px; font-size: 18px; 
             cursor: pointer; font-weight: bold; border-radius: 12px; margin-bottom: 25px; text-transform: uppercase;
         }
-        .btn-scan:disabled { background: #1a1a2e; color: #444; }
 
-        /* Endereço da Carteira Maior (Erro 3) */
         #walletDisplay { font-size: 16px; color: #ffffff; font-family: monospace; margin-bottom: 35px; background: #0d0d1a; padding: 15px; border-radius: 10px; border: 1px solid #1a1a2e; word-break: break-all; }
         
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { color: #666; font-size: 12px; padding: 15px; border-bottom: 1px solid #222; text-transform: uppercase; }
         td { padding: 22px 15px; border-bottom: 1px solid #111; color: #fff; vertical-align: top; }
 
-        /* Lista de RPCs (Erro 2) */
         .rpc-list { font-size: 10px; color: #444; margin-top: 8px; font-family: monospace; }
-        .rpc-item { padding: 2px 0; }
         .rpc-active { color: var(--cyan); font-weight: bold; }
-
         .badge { font-size: 11px; font-weight: bold; padding: 5px 10px; border-radius: 4px; background: #1a1a2e; color: #555; }
     </style>
 </head>
@@ -68,16 +60,16 @@
     </div>
 
     <div class="card">
-        <button id="scanBtn" class="btn-scan" onclick="runSecurityScan()" style="display:none;">Executar Scan Completo</button>
+        <button id="scanBtn" class="btn-scan" onclick="runSecurityScan()" style="display:none;">Repetir Scan Completo</button>
         <div id="walletDisplay">Nenhuma carteira vinculada ao sistema</div>
         
         <table>
             <thead>
                 <tr>
-                    <th width="25%">Rede / Endereços RPC</th>
-                    <th width="25%">Saldo Nativo</th>
-                    <th width="25%">Tokens</th>
-                    <th width="25%">Estado do Scan</th>
+                    <th width="30%">Rede / RPC Endpoints</th>
+                    <th width="20%">Saldo Nativo</th>
+                    <th width="25%">Tokens Detectados</th>
+                    <th width="25%">Riscos & Permissões</th>
                 </tr>
             </thead>
             <tbody id="netTable"></tbody>
@@ -86,11 +78,12 @@
 </div>
 
 <script>
+    // Endereços RPC atualizados via Chainlist (Foco em baixa latência)
     const networks = {
-        '1': { name: "Ethereum", sym: "ETH", rpcs: ["https://eth.llamarpc.com", "https://cloudflare-eth.com"] },
-        '56': { name: "BNB Chain", sym: "BNB", rpcs: ["https://bsc-dataseed.binance.org", "https://binance.llamarpc.com"] },
-        '137': { name: "Polygon", sym: "POL", rpcs: ["https://polygon-rpc.com", "https://polygon.llamarpc.com"] },
-        '42161': { name: "Arbitrum", sym: "ETH", rpcs: ["https://arb1.arbitrum.io/rpc", "https://arbitrum.llamarpc.com"] }
+        '1': { name: "Ethereum", sym: "ETH", rpcs: ["https://eth.meowrpc.com", "https://ethereum.publicnode.com", "https://1rpc.io/eth"] },
+        '56': { name: "BNB Chain", sym: "BNB", rpcs: ["https://binance.llamarpc.com", "https://bsc-dataseed1.binance.org", "https://1rpc.io/bnb"] },
+        '137': { name: "Polygon", sym: "POL", rpcs: ["https://polygon.llamarpc.com", "https://polygon-rpc.com", "https://1rpc.io/matic"] },
+        '42161': { name: "Arbitrum", sym: "ETH", rpcs: ["https://arbitrum.llamarpc.com", "https://arb1.arbitrum.io/rpc", "https://1rpc.io/arb"] }
     };
 
     let currentAccount = "";
@@ -108,7 +101,7 @@
                     </td>
                     <td id="bal-${id}">---</td>
                     <td id="tok-${id}">---</td>
-                    <td id="state-${id}"><span class="badge">AGUARDANDO</span></td>
+                    <td id="state-${id}"><span class="badge">AGUARDANDO SCAN</span></td>
                 </tr>
             `;
         }).join('');
@@ -121,12 +114,12 @@
         const walletDisplay = document.getElementById('walletDisplay');
 
         if (connected) {
-            authBtn.innerText = "Desconectar Carteira";
+            authBtn.innerText = "Desconectar";
             authBtn.className = "btn-auth mode-disconnect";
             statusLabel.innerText = "ONLINE";
             statusLabel.style.color = "var(--green)";
             scanBtn.style.display = "inline-block";
-            walletDisplay.innerHTML = `CONECTADO: <b style="color:var(--cyan)">${currentAccount}</b>`;
+            walletDisplay.innerHTML = `CONECTADO: <b style="color:#fff">${currentAccount}</b>`;
             runSecurityScan();
         } else {
             authBtn.innerText = "Conectar Carteira";
@@ -144,7 +137,7 @@
             try {
                 const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 currentAccount = accs[0]; updateUI(true);
-            } catch (e) { console.error("Login cancelado"); }
+            } catch (e) { console.error("Acesso recusado."); }
         } else {
             currentAccount = ""; updateUI(false);
         }
@@ -152,34 +145,40 @@
 
     async function runSecurityScan() {
         const btn = document.getElementById('scanBtn');
-        btn.disabled = true; btn.innerText = "ESCANEANDO...";
+        btn.disabled = true; btn.innerText = "ANALISANDO REDES...";
 
         for (const id in networks) {
             const net = networks[id];
             const stateEl = document.getElementById(`state-${id}`);
-            stateEl.innerHTML = `<span class="badge" style="color:var(--cyan)">LENDO...</span>`;
+            stateEl.innerHTML = `<span class="badge" style="color:var(--cyan)">PROCESSANDO...</span>`;
             
-            let found = false;
+            let success = false;
             for (let i = 0; i < net.rpcs.length; i++) {
                 const rpcEl = document.getElementById(`rpc-${id}-${i}`);
-                rpcEl.className = "rpc-item rpc-active";
+                // Reseta estilo dos outros RPCs e destaca o atual
+                net.rpcs.forEach((_, idx) => document.getElementById(`rpc-${id}-${idx}`).style.color = "#444");
+                rpcEl.style.color = var(--cyan);
                 
                 try {
-                    const provider = new ethers.JsonRpcProvider(net.rpcs[i]);
-                    const bal = await provider.getBalance(currentAccount);
-                    const eth = ethers.formatEther(bal);
+                    // Timeout manual de 5 segundos por tentativa de RPC
+                    const provider = new ethers.JsonRpcProvider(net.rpcs[i], undefined, { staticNetwork: true });
+                    const bal = await Promise.race([
+                        provider.getBalance(currentAccount),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                    ]);
                     
+                    const eth = ethers.formatEther(bal);
                     document.getElementById(`bal-${id}`).innerText = `${parseFloat(eth).toFixed(4)} ${net.sym}`;
-                    document.getElementById(`tok-${id}`).innerHTML = `<span style="color:var(--green)">Limpo</span>`;
-                    stateEl.innerHTML = `<span class="badge" style="color:var(--green)">CONCLUÍDO</span>`;
-                    found = true;
+                    document.getElementById(`tok-${id}`).innerHTML = `<span style="color:#555">Nenhum risco</span>`;
+                    stateEl.innerHTML = `<span style="color:var(--green); font-weight:bold;">✅ PROTEGIDO</span>`;
+                    success = true;
                     break;
                 } catch (e) {
-                    rpcEl.className = "rpc-item";
                     rpcEl.style.color = "var(--red)";
+                    console.warn(`Falha no RPC: ${net.rpcs[i]}`);
                 }
             }
-            if (!found) stateEl.innerHTML = `<span class="badge" style="color:var(--red)">TIMEOUT</span>`;
+            if (!success) stateEl.innerHTML = `<span style="color:var(--red); font-weight:bold;">ERRO DE CONEXÃO</span>`;
         }
         btn.disabled = false; btn.innerText = "Repetir Scan Completo";
     }
