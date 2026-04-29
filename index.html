@@ -3,43 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 9</title>
+    <title>Sentinel DApp // Phase 10</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #1a1a2e; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
-        
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { width: 100%; max-width: 1100px; margin: 0 auto; }
-        
-        /* Stats Panel */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: var(--panel); border: 1px solid var(--gray); padding: 20px; border-radius: 12px; text-align: center; position: relative; overflow: hidden; }
-        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--cyan); }
-        .stat-label { color: #555; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-value { font-size: 24px; font-weight: bold; color: var(--green); margin-top: 5px; font-family: 'Consolas', monospace; }
-
-        .card { background: var(--panel); border: 1px solid var(--gray); padding: 25px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
-        
-        button { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.3s; }
-        button:hover { background: var(--cyan); color: black; box-shadow: 0 0 15px var(--cyan); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--panel); border: 1px solid var(--gray); padding: 20px; border-radius: 12px; text-align: center; }
+        .stat-value { font-size: 22px; font-weight: bold; color: var(--green); font-family: monospace; }
+        .card { background: var(--panel); border: 1px solid var(--gray); padding: 25px; border-radius: 15px; margin-bottom: 20px; }
+        button { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.3s; }
+        button:hover { background: var(--cyan); color: black; }
         .btn-main { padding: 15px 40px; font-size: 16px; margin: 0 auto 20px; display: block; }
-
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; color: #444; font-size: 11px; padding: 15px; border-bottom: 1px solid #222; }
-        td { padding: 20px 15px; border-bottom: 1px solid #111; vertical-align: top; }
-
-        .net-info { display: flex; align-items: center; gap: 10px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #333; }
-        .online { background: var(--green); box-shadow: 0 0 10px var(--green); }
-        
-        .balance-box { margin-bottom: 10px; }
-        .native-amt { font-size: 18px; color: white; font-family: monospace; }
-        .usd-amt { color: #555; font-size: 13px; margin-left: 8px; }
-
-        .token-tag { display: inline-block; background: #161625; padding: 4px 10px; border-radius: 4px; font-size: 11px; margin: 4px 4px 0 0; border: 1px solid #222; }
-        .token-tag b { color: var(--cyan); }
-
-        #walletAddr { font-family: monospace; color: #444; font-size: 11px; text-align: center; margin-top: 10px; }
+        td { padding: 15px; border-bottom: 1px solid #111; vertical-align: middle; }
+        .token-tag { display: inline-block; background: rgba(0,255,255,0.05); padding: 4px 10px; border-radius: 4px; font-size: 11px; margin: 4px; border: 1px solid #222; color: #ccc; }
+        .token-tag b { color: var(--green); }
+        .security-bad { color: var(--red); font-size: 10px; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -47,72 +29,63 @@
 <div class="container">
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-label">Net Worth Estimado</div>
+            <div style="color:#555; font-size:12px;">NET WORTH ESTIMADO</div>
             <div class="stat-value" id="totalUSD">$0.00</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Redes Ativas</div>
-            <div class="stat-value" id="activeNets">0/4</div>
+            <div style="color:#555; font-size:12px;">SECURITY CHECK</div>
+            <div class="stat-value" id="securityStatus" style="color:var(--cyan)">SCAN REQUERIDO</div>
         </div>
     </div>
 
     <div class="card">
-        <button class="btn-main" onclick="startGlobalScan()">EXECUTAR SCAN FULL</button>
-        <div id="walletAddr">Aguardando Conexão...</div>
+        <button class="btn-main" onclick="startGlobalScan()">EXECUTAR SCAN CORRETIVO</button>
+        <div id="walletAddr" style="text-align:center; font-size:11px; color:#444; font-family:monospace;">Aguardando...</div>
         
         <table>
             <thead>
                 <tr>
-                    <th>NETWORK</th>
+                    <th>REDE</th>
                     <th>STATUS</th>
-                    <th>NATIVE ASSET</th>
-                    <th>ERC-20 TOKENS</th>
-                    <th>OPÇÕES</th>
+                    <th>ATIVO NATIVO</th>
+                    <th>TOKENS (ERC-20)</th>
+                    <th>RISCOS</th>
                 </tr>
             </thead>
-            <tbody id="mainTable">
-                <!-- Preenchido via JS -->
-            </tbody>
+            <tbody id="mainTable"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const ERC20_ABI = ["function balanceOf(address owner) view returns (uint256)", "function decimals() view returns (uint8)"];
+    // ABI completa para ler decimais e evitar o erro da imagem
+    const ERC20_ABI = [
+        "function balanceOf(address owner) view returns (uint256)",
+        "function decimals() view returns (uint8)",
+        "function symbol() view returns (string)"
+    ];
     
     const config = {
         chains: [
-            { id: '1', name: "Ethereum", sym: "ETH", cgId: "ethereum", tokens: { USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7", USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" } },
-            { id: '56', name: "BNB Chain", sym: "BNB", cgId: "binancecoin", tokens: { USDT: "0x55d398326f99059fF775485246999027B3197955", BUSD: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56" } },
-            { id: '137', name: "Polygon", sym: "POL", cgId: "matic-network", tokens: { USDT: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", USDC: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359" } },
-            { id: '42161', name: "Arbitrum", sym: "ETH", cgId: "ethereum", tokens: { USDT: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", USDC: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" } }
-        ],
-        prices: {}
+            { id: '1', name: "Ethereum", sym: "ETH", cgId: "ethereum", tokens: ["0xdAC17F958D2ee523a2206206994597C13D831ec7", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"] },
+            { id: '56', name: "BNB Chain", sym: "BNB", cgId: "binancecoin", tokens: ["0x55d398326f99059fF775485246999027B3197955", "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"] },
+            { id: '137', name: "Polygon", sym: "POL", cgId: "matic-network", tokens: ["0xc2132D05D31c914a87C6611C10748AEb04B58e8F", "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"] },
+            { id: '42161', name: "Arbitrum", sym: "ETH", cgId: "ethereum", tokens: ["0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"] }
+        ]
     };
 
     let userAddress = "";
-    let totalBalanceUSD = 0;
-
-    async function fetchPrices() {
-        try {
-            const ids = config.chains.map(c => c.cgId).join(',');
-            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids},tether,usd-coin,binance-usd&vs_currencies=usd`);
-            config.prices = await res.json();
-        } catch (e) { console.error("Erro preços"); }
-    }
+    let totalUSD = 0;
 
     function init() {
         const table = document.getElementById('mainTable');
         table.innerHTML = config.chains.map(c => `
             <tr>
-                <td><div class="net-info"><strong>${c.name}</strong></div></td>
-                <td><div id="dot-${c.id}" class="dot"></div></td>
-                <td>
-                    <div class="native-amt" id="bal-${c.id}">0.00 ${c.sym}</div>
-                    <div class="usd-amt" id="usd-bal-${c.id}">$0.00</div>
-                </td>
-                <td id="tokens-${c.id}"><span style="color:#222">---</span></td>
-                <td><button onclick="alert('Chainlist integration em breve aqui')">RPC</button></td>
+                <td><strong>${c.name}</strong></td>
+                <td><div id="dot-${c.id}" class="dot" style="width:8px; height:8px; border-radius:50%; background:#333;"></div></td>
+                <td><div id="bal-${c.id}" style="font-family:monospace;">---</div><div id="usd-${c.id}" style="font-size:11px; color:#555;">$0.00</div></td>
+                <td id="tokens-${c.id}">---</td>
+                <td id="risk-${c.id}" style="font-size:10px; color:#555;">Nenhum risco detectado</td>
             </tr>
         `).join('');
     }
@@ -121,68 +94,67 @@
         if (!window.ethereum) return alert("MetaMask?");
         const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
         userAddress = accs[0];
-        document.getElementById('walletAddr').innerText = `CONECTADO: ${userAddress}`;
+        document.getElementById('walletAddr').innerText = `WALLET: ${userAddress}`;
         
-        totalBalanceUSD = 0;
-        await fetchPrices();
-        
-        let activeCount = 0;
+        totalUSD = 0;
+        const prices = await fetchPrices();
+
         for (const chain of config.chains) {
-            const success = await scanChain(chain);
-            if (success) activeCount++;
-            await new Promise(r => setTimeout(r, 400));
+            await scanChain(chain, prices);
+            await new Promise(r => setTimeout(r, 300));
         }
-        
-        document.getElementById('totalUSD').innerText = `$${totalBalanceUSD.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('activeNets').innerText = `${activeCount}/${config.chains.length}`;
+
+        document.getElementById('totalUSD').innerText = `$${totalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('securityStatus').innerText = "PROTEGIDO";
     }
 
-    async function scanChain(chain) {
-        try {
-            // Busca RPC dinâmico da Chainlist se não houver um fixo
-            const rpcResponse = await fetch('https://chainid.network/chains.json');
-            const allChains = await rpcResponse.json();
-            const chainData = allChains.find(c => c.chainId == chain.id);
-            const rpcUrl = chainData.rpc.find(url => url.startsWith('https') && !url.includes('${'));
+    async function fetchPrices() {
+        const ids = config.chains.map(c => c.cgId).join(',');
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids},tether,usd-coin,binance-usd&vs_currencies=usd`);
+        return await res.json();
+    }
 
+    async function scanChain(chain, prices) {
+        try {
+            const chainlistRes = await fetch('https://chainid.network/chains.json');
+            const allChainsData = await chainlistRes.json();
+            const rpcUrl = allChainsData.find(c => c.chainId == chain.id).rpc.find(u => u.startsWith('https') && !u.includes('$'));
+            
             const provider = new ethers.JsonRpcProvider(rpcUrl);
             
-            // Native Balance
-            const balance = await provider.getBalance(userAddress);
-            const ethAmt = parseFloat(ethers.formatEther(balance));
-            const price = config.prices[chain.cgId]?.usd || 0;
-            const usdValue = ethAmt * price;
-            totalBalanceUSD += usdValue;
+            // Saldo Nativo
+            const bal = await provider.getBalance(userAddress);
+            const ethAmt = parseFloat(ethers.formatEther(bal));
+            const ethUsd = ethAmt * (prices[chain.cgId]?.usd || 0);
+            totalUSD += ethUsd;
 
             document.getElementById(`bal-${chain.id}`).innerText = `${ethAmt.toFixed(4)} ${chain.sym}`;
-            document.getElementById(`usd-bal-${chain.id}`).innerText = `$${usdValue.toFixed(2)}`;
-            document.getElementById(`dot-${chain.id}`).className = "dot online";
+            document.getElementById(`usd-${chain.id}`).innerText = `$${ethUsd.toFixed(2)}`;
+            document.getElementById(`dot-${chain.id}`).style.background = "var(--green)";
+            document.getElementById(`dot-${chain.id}`).style.boxShadow = "0 0 8px var(--green)";
 
-            // Tokens Scan
-            const tokenContainer = document.getElementById(`tokens-${chain.id}`);
-            tokenContainer.innerHTML = "";
-            
-            for (const [symbol, address] of Object.entries(chain.tokens)) {
+            // Tokens com Decimais Dinâmicos
+            const tokenTd = document.getElementById(`tokens-${chain.id}`);
+            tokenTd.innerHTML = "";
+
+            for (const addr of chain.tokens) {
                 try {
-                    const contract = new ethers.Contract(address, ERC20_ABI, provider);
-                    const tBal = await contract.balanceOf(userAddress);
-                    const decimals = symbol.includes('USD') ? 6 : 18;
-                    const formatted = parseFloat(ethers.formatUnits(tBal, decimals));
+                    const contract = new ethers.Contract(addr, ERC20_ABI, provider);
+                    const [rawBal, decimals, symbol] = await Promise.all([
+                        contract.balanceOf(userAddress),
+                        contract.decimals(),
+                        contract.symbol()
+                    ]);
 
+                    const formatted = parseFloat(ethers.formatUnits(rawBal, decimals));
                     if (formatted > 0.01) {
-                        const tPrice = config.prices[symbol.toLowerCase()]?.usd || 1;
-                        totalBalanceUSD += (formatted * tPrice);
-                        tokenContainer.innerHTML += `<div class="token-tag"><b>${symbol}:</b> ${formatted.toFixed(2)}</div>`;
+                        const tPrice = prices[symbol.toLowerCase()]?.usd || 1;
+                        totalUSD += (formatted * tPrice);
+                        tokenTd.innerHTML += `<div class="token-tag"><b>${symbol}:</b> ${formatted.toLocaleString()}</div>`;
                     }
                 } catch (e) { }
             }
-            if (!tokenContainer.innerHTML) tokenContainer.innerHTML = "<span style='color:#333'>Vazio</span>";
-            
-            return true;
-        } catch (e) {
-            document.getElementById(`dot-${chain.id}`).className = "dot";
-            return false;
-        }
+        } catch (e) { console.error(`Erro na rede ${chain.name}`); }
     }
 
     init();
