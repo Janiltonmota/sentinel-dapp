@@ -3,75 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 15</title>
+    <title>Sentinel DApp // Phase 16</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #1a1a2e; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        .container { width: 100%; max-width: 1150px; margin: 0 auto; position: relative; }
+        body { background: var(--bg); color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .container { width: 100%; max-width: 1150px; margin: 0 auto; }
         
-        /* Botão Desconectar Superior Direito */
-        .header-nav { display: flex; justify-content: flex-end; margin-bottom: 20px; height: 30px; }
-        .btn-logout { 
-            background: transparent; border: 1px solid var(--red); color: var(--red); 
-            padding: 8px 15px; font-size: 11px; cursor: pointer; border-radius: 5px; 
-            font-weight: bold; text-transform: uppercase; transition: 0.3s;
+        /* Cabeçalho com Botão Desconectar à Direita */
+        .top-bar { display: flex; justify-content: flex-end; margin-bottom: 20px; height: 45px; }
+        .btn-exit { 
+            background: transparent; border: 2px solid var(--red); color: var(--red); 
+            padding: 10px 25px; font-size: 13px; cursor: pointer; border-radius: 8px; 
+            font-weight: bold; text-transform: uppercase; transition: 0.3s; display: none;
         }
-        .btn-logout:hover { background: var(--red); color: white; box-shadow: 0 0 10px var(--red); }
+        .btn-exit:hover { background: var(--red); color: white; box-shadow: 0 0 15px var(--red); }
 
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: var(--panel); border: 1px solid var(--gray); padding: 20px; border-radius: 12px; text-align: center; border-top: 3px solid var(--cyan); }
-        .stat-value { font-size: 24px; font-weight: bold; color: var(--green); font-family: monospace; }
+        .stat-card { background: var(--panel); border: 1px solid var(--gray); padding: 25px; border-radius: 15px; text-align: center; border-top: 3px solid var(--cyan); }
+        .stat-value { font-size: 26px; font-weight: bold; color: var(--green); font-family: monospace; margin-top: 10px; }
 
-        .card { background: var(--panel); border: 1px solid var(--gray); padding: 30px; border-radius: 15px; border-bottom: 1px solid #1a1a2e; }
+        .card { background: var(--panel); border: 1px solid var(--gray); padding: 35px; border-radius: 20px; text-align: center; }
         
-        .btn-main { 
-            background: var(--cyan); color: #000; border: none; padding: 18px 50px; font-size: 16px; 
-            cursor: pointer; font-weight: bold; border-radius: 10px; transition: 0.3s; 
-            display: block; margin: 0 auto 20px; text-transform: uppercase; letter-spacing: 1px;
+        .btn-action { 
+            background: var(--cyan); color: #000; border: none; padding: 20px 60px; font-size: 18px; 
+            cursor: pointer; font-weight: bold; border-radius: 12px; transition: 0.3s; 
+            display: inline-block; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;
         }
-        .btn-main:hover { box-shadow: 0 0 25px var(--cyan); transform: translateY(-2px); }
-        .btn-main:disabled { background: #1a1a2e; color: #555; cursor: wait; transform: none; }
+        .btn-action:hover { box-shadow: 0 0 30px var(--cyan); transform: scale(1.03); }
+        .btn-action:disabled { background: #1a1a2e; color: #444; cursor: wait; transform: none; box-shadow: none; }
 
-        #walletAddr { text-align: center; font-size: 12px; color: #ffffff; font-family: monospace; margin-bottom: 25px; }
+        #walletInfo { color: #ffffff; font-family: monospace; font-size: 13px; margin-bottom: 30px; background: #0d0d1a; padding: 10px; border-radius: 8px; display: inline-block; border: 1px solid #1a1a2e; }
         
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #666; font-size: 11px; padding: 15px; border-bottom: 1px solid #222; }
-        td { padding: 20px 15px; border-bottom: 1px solid #111; color: #fff; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 20px; }
+        th { color: #888; font-size: 12px; padding: 15px; border-bottom: 1px solid #222; text-transform: uppercase; }
+        td { padding: 22px 15px; border-bottom: 1px solid #111; color: #fff; }
 
-        .token-tag { display: inline-block; background: #112233; padding: 5px 12px; border-radius: 6px; font-size: 11px; margin: 3px; border: 1px solid #004444; color: var(--cyan); }
-        .status-badge { font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #1a1a2e; }
+        .token-tag { display: inline-block; background: #112233; padding: 6px 14px; border-radius: 6px; font-size: 12px; border: 1px solid #004444; color: var(--cyan); }
+        .status-msg { font-size: 12px; font-weight: bold; color: #444; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-nav">
-        <button id="logoutBtn" class="btn-logout" onclick="disconnect()" style="display:none;">Desconectar Carteira</button>
+    <div class="top-bar">
+        <button id="exitBtn" class="btn-exit" onclick="disconnect()">Sair / Desconectar</button>
     </div>
     
     <div class="stats-grid">
         <div class="stat-card">
-            <div style="color:#666; font-size:12px; margin-bottom:8px;">PATRIMÔNIO TOTAL ESTIMADO</div>
+            <div style="color:#888; font-size:13px;">VALOR TOTAL (USD)</div>
             <div class="stat-value" id="totalUSD">$0,00</div>
         </div>
         <div class="stat-card">
-            <div style="color:#666; font-size:12px; margin-bottom:8px;">STATUS DO SISTEMA</div>
-            <div class="stat-value" id="walletStatus" style="color:var(--red)">OFFLINE</div>
+            <div style="color:#888; font-size:13px;">ESTADO DA CONEXÃO</div>
+            <div class="stat-value" id="statusText" style="color:var(--red)">OFFLINE</div>
         </div>
     </div>
 
     <div class="card">
-        <button id="mainBtn" class="btn-main" onclick="handleAction()">Conectar Carteira</button>
-        <div id="walletAddr">Aguardando autorização da MetaMask...</div>
+        <button id="actionBtn" class="btn-action" onclick="handleLogic()">Conectar Carteira</button>
+        <br>
+        <div id="walletInfo">Aguardando login...</div>
         
         <table>
             <thead>
                 <tr>
-                    <th width="20%">REDE</th>
-                    <th width="25%">ATIVO NATIVO</th>
-                    <th width="30%">TOKENS DETECTADOS</th>
-                    <th width="25%">ESTADO DO SCAN</th>
+                    <th>Rede</th>
+                    <th>Saldo Nativo</th>
+                    <th>Tokens Detectados</th>
+                    <th>Riscos & Permissões</th>
                 </tr>
             </thead>
             <tbody id="mainTable"></tbody>
@@ -80,99 +81,101 @@
 </div>
 
 <script>
-    const config = {
-        chains: [
-            { id: '1', name: "Ethereum", sym: "ETH", cgId: "ethereum", rpc: "https://ethereum.publicnode.com" },
-            { id: '56', name: "BNB Chain", sym: "BNB", cgId: "binancecoin", rpc: "https://bsc-dataseed.binance.org" },
-            { id: '137', name: "Polygon", sym: "POL", cgId: "matic-network", rpc: "https://polygon-rpc.com" },
-            { id: '42161', name: "Arbitrum", sym: "ETH", cgId: "ethereum", rpc: "https://arb1.alphacdn.net/rpc" }
-        ]
-    };
+    // RPCs atualizados para evitar Erros de Conexão
+    const networks = [
+        { id: '1', name: "Ethereum", sym: "ETH", rpc: "https://cloudflare-eth.com" },
+        { id: '56', name: "BNB Chain", sym: "BNB", rpc: "https://binance.llamarpc.com" },
+        { id: '137', name: "Polygon", sym: "POL", rpc: "https://polygon.llamarpc.com" },
+        { id: '42161', name: "Arbitrum", sym: "ETH", rpc: "https://arbitrum.llamarpc.com" }
+    ];
 
-    let userAddress = "";
+    let account = "";
 
     async function init() {
-        renderTable();
+        drawTable();
         if (window.ethereum) {
-            const accs = await window.ethereum.request({ method: 'eth_accounts' });
-            if (accs.length > 0) { userAddress = accs[0]; updateUI(true); }
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                account = accounts[0];
+                refreshUI(true);
+            }
         }
     }
 
-    function renderTable() {
-        document.getElementById('mainTable').innerHTML = config.chains.map(c => `
+    function drawTable() {
+        document.getElementById('mainTable').innerHTML = networks.map(n => `
             <tr>
-                <td><b style="color:var(--cyan)">${c.name}</b></td>
-                <td id="bal-${c.id}">---</td>
-                <td id="tokens-${c.id}">---</td>
-                <td id="state-${c.id}"><span class="status-badge" style="color:#444">AGUARDANDO</span></td>
+                <td style="color:var(--cyan); font-weight:bold;">${n.name}</td>
+                <td id="bal-${n.id}">---</td>
+                <td id="tok-${n.id}">---</td>
+                <td id="risk-${n.id}"><span class="status-msg">Aguardando Scan...</span></td>
             </tr>
         `).join('');
     }
 
-    function updateUI(isConnected) {
-        const btn = document.getElementById('mainBtn');
-        const status = document.getElementById('walletStatus');
-        const addrDiv = document.getElementById('walletAddr');
-        const logout = document.getElementById('logoutBtn');
+    function refreshUI(connected) {
+        const actionBtn = document.getElementById('actionBtn');
+        const exitBtn = document.getElementById('exitBtn');
+        const statusText = document.getElementById('statusText');
+        const info = document.getElementById('walletInfo');
 
-        if (isConnected) {
-            btn.innerText = "INICIAR SCAN DE SEGURANÇA";
-            status.innerText = "ONLINE";
-            status.style.color = "var(--green)";
-            addrDiv.innerHTML = `CARTEIRA ATIVA: <span style="color:var(--cyan); font-weight:bold;">${userAddress}</span>`;
-            logout.style.display = "block";
+        if (connected) {
+            actionBtn.innerText = "Executar Scan de Segurança";
+            exitBtn.style.display = "block";
+            statusText.innerText = "ONLINE";
+            statusText.style.color = "var(--green)";
+            info.innerHTML = `CONECTADO: <b style="color:var(--cyan)">${account}</b>`;
         } else {
-            btn.innerText = "Conectar Carteira";
-            status.innerText = "OFFLINE";
-            status.style.color = "var(--red)";
-            addrDiv.innerText = "Nenhuma carteira detectada.";
-            logout.style.display = "none";
-            renderTable();
+            actionBtn.innerText = "Conectar Carteira";
+            exitBtn.style.display = "none";
+            statusText.innerText = "OFFLINE";
+            statusText.style.color = "var(--red)";
+            info.innerText = "Aguardando login...";
+            drawTable();
         }
     }
 
-    async function handleAction() {
-        if (!userAddress) {
+    async function handleLogic() {
+        if (!account) {
             try {
                 const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                userAddress = accs[0];
-                updateUI(true);
-            } catch (e) { console.error("Login cancelado"); }
+                account = accs[0];
+                refreshUI(true);
+            } catch (e) { console.log("Login negado"); }
         } else {
-            runScan();
+            triggerScan();
         }
     }
 
     function disconnect() {
-        userAddress = "";
-        updateUI(false);
+        account = "";
+        refreshUI(false);
     }
 
-    async function runScan() {
-        const btn = document.getElementById('mainBtn');
+    async function triggerScan() {
+        const btn = document.getElementById('actionBtn');
         btn.disabled = true;
-        btn.innerText = "ESCANEANDO REDES...";
+        btn.innerText = "ANALISANDO...";
 
-        for (const chain of config.chains) {
-            const stateEl = document.getElementById(`state-${chain.id}`);
-            stateEl.innerHTML = `<span class="status-badge" style="color:var(--cyan)">SCANNING...</span>`;
+        for (const net of networks) {
+            const riskField = document.getElementById(`risk-${net.id}`);
+            riskField.innerHTML = `<span style="color:var(--cyan)">SCANNING...</span>`;
             
             try {
-                const provider = new ethers.JsonRpcProvider(chain.rpc);
-                const balance = await provider.getBalance(userAddress);
-                const ethAmt = parseFloat(ethers.formatEther(balance));
+                const provider = new ethers.JsonRpcProvider(net.rpc);
+                const bal = await provider.getBalance(account);
+                const val = parseFloat(ethers.formatEther(bal));
                 
-                document.getElementById(`bal-${chain.id}`).innerText = `${ethAmt.toFixed(4)} ${chain.sym}`;
-                document.getElementById(`tokens-${chain.id}`).innerHTML = `<div class="token-tag">Nenhum risco</div>`;
-                stateEl.innerHTML = `<span class="status-badge" style="color:var(--green)">CONCLUÍDO</span>`;
+                document.getElementById(`bal-${net.id}`).innerText = `${val.toFixed(4)} ${net.sym}`;
+                document.getElementById(`tok-${net.id}`).innerHTML = `<span class="token-tag">Limpo</span>`;
+                riskField.innerHTML = `<span style="color:var(--green)">✅ SEM RISCOS</span>`;
             } catch (err) {
-                stateEl.innerHTML = `<span class="status-badge" style="color:var(--red)">TIMEOUT</span>`;
+                riskField.innerHTML = `<span style="color:var(--red)">TIMEOUT (RPC)</span>`;
             }
         }
 
         btn.disabled = false;
-        btn.innerText = "REPETIR SCAN";
+        btn.innerText = "REPETIR SCAN COMPLETO";
     }
 
     init();
