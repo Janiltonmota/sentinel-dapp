@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 24</title>
+    <title>Sentinel DApp // Phase 25</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #1a1a2e; }
@@ -23,7 +23,7 @@
         th { color: #666; font-size: 12px; padding: 15px; border-bottom: 1px solid #222; text-transform: uppercase; }
         td { padding: 20px 15px; border-bottom: 1px solid #111; color: #fff; }
 
-        .rpc-select { background: #0d0d1a; color: var(--cyan); border: 1px solid #1a1a2e; padding: 8px; font-size: 11px; border-radius: 4px; width: 100%; max-width: 280px; }
+        .rpc-select { background: #0d0d1a; color: var(--cyan); border: 1px solid #1a1a2e; padding: 8px; font-size: 11px; border-radius: 4px; width: 100%; max-width: 280px; outline: none; cursor: pointer; }
         .token-list { font-size: 11px; color: var(--green); list-style: none; padding: 0; margin: 0; font-family: monospace; }
         .badge { font-size: 11px; font-weight: bold; padding: 5px 10px; border-radius: 4px; background: #1a1a2e; color: #555; }
     </style>
@@ -43,7 +43,7 @@
             <thead>
                 <tr>
                     <th width="20%">Rede</th>
-                    <th width="30%">Escolher RPC</th>
+                    <th width="30%">Escolher RPC (Chainlist)</th>
                     <th width="20%">Saldo Nativo</th>
                     <th width="20%">Tokens ERC-20</th>
                     <th width="10%">Status</th>
@@ -55,28 +55,22 @@
 </div>
 
 <script>
-    const ERC20_ABI = [
-        "function balanceOf(address owner) view returns (uint256)",
-        "function symbol() view returns (string)",
-        "function decimals() view returns (uint8)"
-    ];
+    const ERC20_ABI = ["function balanceOf(address owner) view returns (uint256)", "function symbol() view returns (string)", "function decimals() view returns (uint8)"];
 
-    // Watchlist focada em ativos de liquidez para as redes principais
     const tokenWatchlist = [
         { name: "USDT", address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", chains: [1] },
         { name: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", chains: [1] },
         { name: "USDT", address: "0x55d398326f99059fF775485246999027B3197955", chains: [56] },
-        { name: "USDC", address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", chains: [56] },
         { name: "USDT", address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", chains: [137] },
-        { name: "USDC", address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", chains: [137] },
         { name: "USDT", address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", chains: [42161] }
     ];
 
+    // Lista de redes atualizada - Sem FST e com múltiplos RPCs por rede
     const chainData = [
-        { name: "Ethereum", chainId: 1, symbol: "ETH", rpcs: ["https://eth.meowrpc.com"] },
-        { name: "BNB Chain", chainId: 56, symbol: "BNB", rpcs: ["https://binance.llamarpc.com"] },
-        { name: "Polygon", chainId: 137, symbol: "POL", rpcs: ["https://polygon-bor-rpc.publicnode.com"] },
-        { name: "Arbitrum", chainId: 42161, symbol: "ETH", rpcs: ["https://arbitrum.llamarpc.com"] }
+        { name: "Ethereum", chainId: 1, symbol: "ETH", rpcs: ["https://eth.meowrpc.com", "https://ethereum.publicnode.com", "https://1rpc.io/eth"] },
+        { name: "BNB Chain", chainId: 56, symbol: "BNB", rpcs: ["https://bsc-dataseed1.binance.org", "https://binance.llamarpc.com", "https://rpc.ankr.com/bsc"] },
+        { name: "Polygon", chainId: 137, symbol: "POL", rpcs: ["https://polygon-bor-rpc.publicnode.com", "https://polygon.llamarpc.com", "https://1rpc.io/matic"] },
+        { name: "Arbitrum", chainId: 42161, symbol: "ETH", rpcs: ["https://arbitrum.llamarpc.com", "https://arb1.arbitrum.io/rpc", "https://arbitrum-one.publicnode.com", "https://1rpc.io/arb"] }
     ];
 
     let currentAccount = "";
@@ -143,29 +137,31 @@
             tokenEl.innerHTML = "";
 
             try {
-                const provider = new ethers.JsonRpcProvider(rpc);
-                const bal = await provider.getBalance(currentAccount);
+                const provider = new ethers.JsonRpcProvider(rpc, undefined, { staticNetwork: true });
+                // Timeout mais agressivo de 5s para evitar travamento manual
+                const bal = await Promise.race([
+                    provider.getBalance(currentAccount),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                ]);
+                
                 document.getElementById(`bal-${chain.chainId}`).innerText = `${parseFloat(ethers.formatEther(bal)).toFixed(4)} ${chain.symbol}`;
 
-                // Varredura de tokens
                 for (const tConfig of tokenWatchlist) {
                     if (tConfig.chains.includes(chain.chainId)) {
                         try {
                             const contract = new ethers.Contract(tConfig.address, ERC20_ABI, provider);
                             const tBal = await contract.balanceOf(currentAccount);
-                            
                             if (tBal > 0n) {
                                 const decimals = await contract.decimals();
                                 const symbol = await contract.symbol();
-                                const formatted = ethers.formatUnits(tBal, decimals);
-                                tokenEl.innerHTML += `<li>• ${parseFloat(formatted).toFixed(2)} ${symbol}</li>`;
+                                tokenEl.innerHTML += `<li>• ${parseFloat(ethers.formatUnits(tBal, decimals)).toFixed(2)} ${symbol}</li>`;
                             }
-                        } catch (tokenErr) { console.warn("Erro no token:", tConfig.name); }
+                        } catch (err) {}
                     }
                 }
                 
                 if(tokenEl.innerHTML === "") tokenEl.innerHTML = "<li style='color:#444'>Nenhum ativo</li>";
-                stateEl.innerHTML = `<span style="color:var(--green); font-weight:bold;">✅ PROTEGIDO</span>`;
+                stateEl.innerHTML = `<span style="color:var(--green); font-weight:bold;">✅ CONCLUÍDO</span>`;
 
             } catch (e) {
                 stateEl.innerHTML = `<span style="color:var(--red); font-weight:bold;">TIMEOUT</span>`;
