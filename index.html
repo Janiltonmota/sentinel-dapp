@@ -3,199 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel DApp // Phase 18</title>
+    <title>Sentinel DApp // Phase 19</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #020205; --panel: #0a0a0f; --cyan: #00ffff; --green: #00ff88; --red: #ff3366; --gray: #1a1a2e; }
         body { background: var(--bg); color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { width: 100%; max-width: 1150px; margin: 0 auto; }
         
-        /* Barra Superior Estática */
-        .header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 30px; padding: 10px 0; border-bottom: 1px solid #1a1a2e; }
-        .nav-btn { 
-            padding: 12px 25px; font-size: 13px; cursor: pointer; border-radius: 8px; 
-            font-weight: bold; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px;
-            min-width: 180px; text-align: center;
+        /* Cabeçalho Fixo (Erro 1) */
+        .top-nav { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+        .btn-auth { 
+            padding: 12px 30px; font-size: 14px; cursor: pointer; border-radius: 8px; 
+            font-weight: bold; text-transform: uppercase; transition: 0.3s; min-width: 220px;
         }
-        .btn-connect { background: transparent; border: 2px solid var(--cyan); color: var(--cyan); }
-        .btn-connect:hover { background: var(--cyan); color: #000; box-shadow: 0 0 20px var(--cyan); }
-        .btn-disconnect { background: transparent; border: 2px solid var(--red); color: var(--red); }
-        .btn-disconnect:hover { background: var(--red); color: #fff; box-shadow: 0 0 20px var(--red); }
+        .mode-connect { background: transparent; border: 2px solid var(--cyan); color: var(--cyan); }
+        .mode-connect:hover { background: var(--cyan); color: #000; box-shadow: 0 0 20px var(--cyan); }
+        .mode-disconnect { background: transparent; border: 2px solid var(--red); color: var(--red); }
+        .mode-disconnect:hover { background: var(--red); color: #fff; box-shadow: 0 0 20px var(--red); }
 
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: var(--panel); border: 1px solid var(--gray); padding: 25px; border-radius: 15px; text-align: center; border-top: 3px solid var(--cyan); }
-        .stat-label { color: #666; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; }
-        .stat-value { font-size: 26px; font-weight: bold; font-family: monospace; }
+        .stat-value { font-size: 28px; font-weight: bold; color: var(--green); font-family: monospace; }
 
-        .main-card { background: var(--panel); border: 1px solid var(--gray); padding: 30px; border-radius: 20px; }
-        .scan-status-bar { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #111; }
+        .card { background: var(--panel); border: 1px solid var(--gray); padding: 35px; border-radius: 20px; text-align: center; }
         
+        /* Botão de Scan */
         .btn-scan { 
-            background: var(--cyan); color: #000; border: none; padding: 15px 40px; 
-            font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer;
-            text-transform: uppercase; transition: 0.3s; display: none;
+            background: var(--cyan); color: #000; border: none; padding: 18px 50px; font-size: 18px; 
+            cursor: pointer; font-weight: bold; border-radius: 12px; margin-bottom: 25px; text-transform: uppercase;
         }
-        .btn-scan:hover { box-shadow: 0 0 30px var(--cyan); transform: translateY(-2px); }
-        .btn-scan:disabled { background: #1a1a2e; color: #444; cursor: wait; transform: none; }
+        .btn-scan:disabled { background: #1a1a2e; color: #444; }
 
-        #walletTag { font-family: monospace; font-size: 12px; color: #fff; margin-top: 15px; display: block; opacity: 0.8; }
+        /* Endereço da Carteira Maior (Erro 3) */
+        #walletDisplay { font-size: 16px; color: #ffffff; font-family: monospace; margin-bottom: 35px; background: #0d0d1a; padding: 15px; border-radius: 10px; border: 1px solid #1a1a2e; word-break: break-all; }
         
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #444; font-size: 11px; padding: 15px; border-bottom: 1px solid #222; text-transform: uppercase; }
-        td { padding: 20px 15px; border-bottom: 1px solid #111; color: #fff; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { color: #666; font-size: 12px; padding: 15px; border-bottom: 1px solid #222; text-transform: uppercase; }
+        td { padding: 22px 15px; border-bottom: 1px solid #111; color: #fff; vertical-align: top; }
 
-        .badge { font-size: 10px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #0d0d1a; color: #555; border: 1px solid #1a1a2e; }
-        .loading { color: var(--cyan); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        /* Lista de RPCs (Erro 2) */
+        .rpc-list { font-size: 10px; color: #444; margin-top: 8px; font-family: monospace; }
+        .rpc-item { padding: 2px 0; }
+        .rpc-active { color: var(--cyan); font-weight: bold; }
+
+        .badge { font-size: 11px; font-weight: bold; padding: 5px 10px; border-radius: 4px; background: #1a1a2e; color: #555; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Header fixado com botão que alterna -->
-    <div class="header">
-        <button id="authBtn" class="nav-btn btn-connect" onclick="toggleAuth()">Conectar Carteira</button>
+    <div class="top-nav">
+        <button id="authBtn" class="btn-auth mode-connect" onclick="handleAuth()">Conectar Carteira</button>
     </div>
     
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-label">Valor Total Estimado</div>
-            <div class="stat-value" id="totalUSD" style="color:var(--green)">$0,00</div>
+            <div style="color:#666; font-size:12px; margin-bottom:10px;">PATRIMÔNIO ESTIMADO</div>
+            <div class="stat-value" id="totalUSD">$0,00</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Estado da Conexão</div>
-            <div class="stat-value" id="statusVal" style="color:var(--red)">OFFLINE</div>
+            <div style="color:#666; font-size:12px; margin-bottom:10px;">STATUS SISTEMA</div>
+            <div class="stat-value" id="statusLabel" style="color:var(--red)">OFFLINE</div>
         </div>
     </div>
 
-    <div class="main-card">
-        <div class="scan-status-bar">
-            <button id="scanBtn" class="btn-scan" onclick="startDeepScan()">Repetir Scan Completo</button>
-            <span id="walletTag">Aguardando login para mapeamento...</span>
-        </div>
+    <div class="card">
+        <button id="scanBtn" class="btn-scan" onclick="runSecurityScan()" style="display:none;">Executar Scan Completo</button>
+        <div id="walletDisplay">Nenhuma carteira vinculada ao sistema</div>
         
         <table>
             <thead>
                 <tr>
-                    <th width="20%">Rede</th>
+                    <th width="25%">Rede / Endereços RPC</th>
                     <th width="25%">Saldo Nativo</th>
-                    <th width="30%">Tokens Detectados</th>
-                    <th width="25%">Riscos & Permissões</th>
+                    <th width="25%">Tokens</th>
+                    <th width="25%">Estado do Scan</th>
                 </tr>
             </thead>
-            <tbody id="tableBody"></tbody>
+            <tbody id="netTable"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // Lista de RPCs redundantes para evitar TIMEOUT
-    const netConfig = [
-        { id: '1', name: "Ethereum", sym: "ETH", rpcs: ["https://eth.llamarpc.com", "https://cloudflare-eth.com"] },
-        { id: '56', name: "BNB Chain", sym: "BNB", rpcs: ["https://bsc-dataseed.binance.org", "https://binance.llamarpc.com"] },
-        { id: '137', name: "Polygon", sym: "POL", rpcs: ["https://polygon-rpc.com", "https://polygon.llamarpc.com"] },
-        { id: '42161', name: "Arbitrum", sym: "ETH", rpcs: ["https://arb1.arbitrum.io/rpc", "https://arbitrum.llamarpc.com"] }
-    ];
+    const networks = {
+        '1': { name: "Ethereum", sym: "ETH", rpcs: ["https://eth.llamarpc.com", "https://cloudflare-eth.com"] },
+        '56': { name: "BNB Chain", sym: "BNB", rpcs: ["https://bsc-dataseed.binance.org", "https://binance.llamarpc.com"] },
+        '137': { name: "Polygon", sym: "POL", rpcs: ["https://polygon-rpc.com", "https://polygon.llamarpc.com"] },
+        '42161': { name: "Arbitrum", sym: "ETH", rpcs: ["https://arb1.arbitrum.io/rpc", "https://arbitrum.llamarpc.com"] }
+    };
 
-    let userAccount = "";
+    let currentAccount = "";
 
-    async function checkConnection() {
-        if (window.ethereum) {
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-            if (accounts.length > 0) {
-                userAccount = accounts[0];
-                updateInterface(true);
-            }
-        }
-        renderBaseTable();
+    function renderTable() {
+        document.getElementById('netTable').innerHTML = Object.keys(networks).map(id => {
+            const n = networks[id];
+            return `
+                <tr>
+                    <td>
+                        <b style="color:var(--cyan)">${n.name}</b>
+                        <div class="rpc-list">
+                            ${n.rpcs.map((url, i) => `<div class="rpc-item" id="rpc-${id}-${i}">${url}</div>`).join('')}
+                        </div>
+                    </td>
+                    <td id="bal-${id}">---</td>
+                    <td id="tok-${id}">---</td>
+                    <td id="state-${id}"><span class="badge">AGUARDANDO</span></td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    function renderBaseTable() {
-        document.getElementById('tableBody').innerHTML = netConfig.map(n => `
-            <tr>
-                <td><b style="color:var(--cyan)">${n.name}</b></td>
-                <td id="bal-${n.id}">---</td>
-                <td id="tok-${n.id}">---</td>
-                <td id="risk-${n.id}"><span class="badge">AGUARDANDO SCAN</span></td>
-            </tr>
-        `).join('');
-    }
-
-    function updateInterface(isConnected) {
+    function updateUI(connected) {
         const authBtn = document.getElementById('authBtn');
         const scanBtn = document.getElementById('scanBtn');
-        const statusVal = document.getElementById('statusVal');
-        const walletTag = document.getElementById('walletTag');
+        const statusLabel = document.getElementById('statusLabel');
+        const walletDisplay = document.getElementById('walletDisplay');
 
-        if (isConnected) {
-            authBtn.innerText = "Desconectar";
-            authBtn.className = "nav-btn btn-disconnect";
-            statusVal.innerText = "ONLINE";
-            statusVal.style.color = "var(--green)";
+        if (connected) {
+            authBtn.innerText = "Desconectar Carteira";
+            authBtn.className = "btn-auth mode-disconnect";
+            statusLabel.innerText = "ONLINE";
+            statusLabel.style.color = "var(--green)";
             scanBtn.style.display = "inline-block";
-            walletTag.innerHTML = `CONECTADO: <span style="color:var(--cyan)">${userAccount}</span>`;
-            startDeepScan();
+            walletDisplay.innerHTML = `CONECTADO: <b style="color:var(--cyan)">${currentAccount}</b>`;
+            runSecurityScan();
         } else {
             authBtn.innerText = "Conectar Carteira";
-            authBtn.className = "nav-btn btn-connect";
-            statusVal.innerText = "OFFLINE";
-            statusVal.style.color = "var(--red)";
+            authBtn.className = "btn-auth mode-connect";
+            statusLabel.innerText = "OFFLINE";
+            statusLabel.style.color = "var(--red)";
             scanBtn.style.display = "none";
-            walletTag.innerText = "Aguardando login para mapeamento...";
-            renderBaseTable();
+            walletDisplay.innerText = "Nenhuma carteira vinculada ao sistema";
+            renderTable();
         }
     }
 
-    async function toggleAuth() {
-        if (!userAccount) {
+    async function handleAuth() {
+        if (!currentAccount) {
             try {
                 const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                userAccount = accs[0];
-                updateInterface(true);
-            } catch (e) { console.error("Acesso negado."); }
+                currentAccount = accs[0]; updateUI(true);
+            } catch (e) { console.error("Login cancelado"); }
         } else {
-            userAccount = "";
-            updateInterface(false);
+            currentAccount = ""; updateUI(false);
         }
     }
 
-    async function startDeepScan() {
-        const sBtn = document.getElementById('scanBtn');
-        sBtn.disabled = true;
-        sBtn.innerText = "SCANNING...";
+    async function runSecurityScan() {
+        const btn = document.getElementById('scanBtn');
+        btn.disabled = true; btn.innerText = "ESCANEANDO...";
 
-        for (const net of netConfig) {
-            const riskEl = document.getElementById(`risk-${net.id}`);
-            riskEl.innerHTML = `<span class="loading">Analisando...</span>`;
+        for (const id in networks) {
+            const net = networks[id];
+            const stateEl = document.getElementById(`state-${id}`);
+            stateEl.innerHTML = `<span class="badge" style="color:var(--cyan)">LENDO...</span>`;
             
-            let success = false;
-            // Tenta cada RPC disponível até funcionar
-            for (const rpcUrl of net.rpcs) {
+            let found = false;
+            for (let i = 0; i < net.rpcs.length; i++) {
+                const rpcEl = document.getElementById(`rpc-${id}-${i}`);
+                rpcEl.className = "rpc-item rpc-active";
+                
                 try {
-                    const provider = new ethers.JsonRpcProvider(rpcUrl);
-                    const bal = await provider.getBalance(userAccount);
-                    const eth = parseFloat(ethers.formatEther(bal));
+                    const provider = new ethers.JsonRpcProvider(net.rpcs[i]);
+                    const bal = await provider.getBalance(currentAccount);
+                    const eth = ethers.formatEther(bal);
                     
-                    document.getElementById(`bal-${net.id}`).innerText = `${eth.toFixed(4)} ${net.sym}`;
-                    document.getElementById(`tok-${net.id}`).innerHTML = `<span style="color:#555">Nenhum risco</span>`;
-                    riskEl.innerHTML = `<span style="color:var(--green); font-weight:bold;">✅ PROTEGIDO</span>`;
-                    success = true;
-                    break; // Sai do loop de RPCs se um funcionar
-                } catch (err) {
-                    console.warn(`Falha no RPC ${rpcUrl} para ${net.name}. Tentando próximo...`);
+                    document.getElementById(`bal-${id}`).innerText = `${parseFloat(eth).toFixed(4)} ${net.sym}`;
+                    document.getElementById(`tok-${id}`).innerHTML = `<span style="color:var(--green)">Limpo</span>`;
+                    stateEl.innerHTML = `<span class="badge" style="color:var(--green)">CONCLUÍDO</span>`;
+                    found = true;
+                    break;
+                } catch (e) {
+                    rpcEl.className = "rpc-item";
+                    rpcEl.style.color = "var(--red)";
                 }
             }
-
-            if (!success) {
-                riskEl.innerHTML = `<span style="color:var(--red)">TIMEOUT (ALL RPCS)</span>`;
-            }
+            if (!found) stateEl.innerHTML = `<span class="badge" style="color:var(--red)">TIMEOUT</span>`;
         }
-
-        sBtn.disabled = false;
-        sBtn.innerText = "Repetir Scan Completo";
+        btn.disabled = false; btn.innerText = "Repetir Scan Completo";
     }
 
-    checkConnection();
+    renderTable();
 </script>
 </body>
 </html>
