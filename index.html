@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Hyperliquid Custom - Landing</title>
+    <title>Hyperliquid Custom - Trader</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        /* Reset total */
         * {
             margin: 0;
             padding: 0;
@@ -14,7 +14,7 @@
         html, body {
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Evita scroll desnecessário */
+            overflow: hidden;
         }
 
         body {
@@ -24,401 +24,292 @@
             display: flex;
         }
 
-        .main {
+        /* Menu lateral esquerdo */
+        .sidebar {
+            width: 60px;
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            border-right: 1px solid #333;
+        }
+
+        .sidebar-icon {
+            width: 40px;
+            height: 40px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #2d2d4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 18px;
+        }
+
+        .sidebar-icon:hover {
+            background: #00ff88;
+            color: black;
+        }
+
+        /* Área principal */
+        .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
             padding: 20px;
-            position: relative;
-            min-height: 100vh;
         }
 
-        .sidebar {
-            width: 300px;
-            background: #111;
-            border-left: 1px solid #333;
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #2d2d4a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .wallet-info {
+            font-size: 14px;
+            color: #00ff88;
+        }
+
+        /* Gráfico */
+        #chart-container {
+            flex: 2;
+            background: #121220;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        /* Boleta de trading */
+        .order-panel {
+            flex: 1;
+            background: #1a1a2e;
+            border-radius: 12px;
             padding: 20px;
-            overflow-y: auto;
-            height: 100vh;
             display: flex;
             flex-direction: column;
+            gap: 15px;
         }
 
-        h1 { 
-            color: #00ff88; 
-            font-size: 48px;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-            margin-bottom: 10px;
+        .input-group {
+            display: flex;
+            gap: 10px;
         }
 
-        p { 
-            font-size: 18px; 
-            color: #ccc; 
-            margin-bottom: 30px;
+        input, select, button {
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            background: #2d2d4a;
+            color: white;
+            font-size: 14px;
         }
 
-        button {
-            padding: 15px 30px;
-            font-size: 16px;
+        .btn-buy {
             background: #00ff88;
             color: black;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px 0;
-            transition: all 0.3s;
-            min-width: 250px;
-        }
-
-        button:hover { 
-            background: #00cc6a; 
-            transform: scale(1.05);
-        }
-
-        .status { 
-            margin: 20px 0; 
-            font-size: 14px; 
-            min-height: 20px;
-        }
-
-        .error { 
-            color: #ff3366; 
-            margin-top: 10px;
-            min-height: 20px;
-        }
-
-        .success { color: #00ff88; }
-
-        .log { 
-            font-family: monospace; 
-            font-size: 12px; 
-            background: #1a1a1a; 
-            padding: 5px; 
-            margin: 5px 0; 
-            border-radius: 3px; 
-            word-break: break-all;
-        }
-
-        .checklist-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-weight: bold;
-            font-size: 12px;
+            flex: 1;
         }
 
-        .pending { background: #555; color: white; }
-        .done { background: #00ff88; color: black; }
-        .error-icon { background: #ff3366; color: white; }
-
-        /* Botão de simulação */
-        .dev-btn {
-            background: #555 !important;
-            color: white !important;
+        .btn-sell {
+            background: #ff3366;
+            color: white;
+            font-weight: bold;
+            flex: 1;
         }
 
-        .dev-btn:hover {
-            background: #777 !important;
+        .price-display {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
         }
 
-        /* Responsividade básica */
+        /* Responsividade */
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
             }
             .sidebar {
                 width: 100%;
-                height: auto;
-                max-height: 40vh;
-                border-left: none;
-                border-top: 1px solid #333;
+                height: 60px;
+                flex-direction: row;
+                justify-content: center;
+                padding: 0;
+                border-right: none;
+                border-bottom: 1px solid #333;
             }
-            .main {
+            .sidebar-icon {
+                margin: 0 10px;
+            }
+            .main-content {
                 padding: 10px;
-            }
-            h1 {
-                font-size: 32px;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="main">
-    <h1>HYPERLIQUID CUSTOM</h1>
-    <p>Seu terminal de trading personalizado. Conecte sua carteira na Arbitrum.</p>
-    
-    <button id="connectBtn" onclick="connectWallet()">🦊 Conectar Carteira</button>
-    
-    <!-- Botão de Simulação para Desenvolvimento -->
-    <button class="dev-btn" onclick="simulateConnection()">🛠️ Simular Conexão (Dev Mode)</button>
-    
-    <div class="status" id="status">Aguardando conexão...</div>
-    <div class="error" id="error"></div>
-</div>
+    <!-- Menu Lateral -->
+    <div class="sidebar">
+        <div class="sidebar-icon" title="Gráfico">📈</div>
+        <div class="sidebar-icon" title="Configurações">⚙️</div>
+        <div class="sidebar-icon" title="Histórico">📜</div>
+        <div class="sidebar-icon" title="Carteira">💰</div>
+        <div class="sidebar-icon" title="Ajuda">❓</div>
+    </div>
 
-<div class="sidebar">
-    <h3>📋 Checklist</h3>
-    <div class="checklist-item"><div class="icon pending" id="c1">?</div> Provedor Web3</div>
-    <div class="checklist-item"><div class="icon pending" id="c2">?</div> Contas</div>
-    <div class="checklist-item"><div class="icon pending" id="c3">?</div> Rede Arbitrum</div>
-    <div class="checklist-item"><div class="icon pending" id="c4">?</div> Salvar dados</div>
-    <div class="checklist-item"><div class="icon pending" id="c5">?</div> Interface</div>
+    <!-- Área Principal -->
+    <div class="main-content">
+        <div class="header-bar">
+            <a href="index.html" class="back-btn">← Voltar</a>
+            <div class="wallet-info" id="wallet-address">Carteira não conectada</div>
+        </div>
 
-    <h3>🪵 Logs</h3>
-    <div id="logs" style="flex: 1; overflow-y: auto;"></div>
-</div>
+        <!-- Gráfico -->
+        <div id="chart-container"></div>
+
+        <!-- Boleta -->
+        <div class="order-panel">
+            <h3>Boleta de Trading - BTC-USDC</h3>
+            
+            <div class="price-display" id="current-price">Carregando...</div>
+
+            <div class="input-group">
+                <input type="number" placeholder="Quantidade (BTC)" id="amount" value="0.01" step="0.001">
+                <select id="order-type">
+                    <option value="limit">Limit</option>
+                    <option value="market">Market</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <input type="number" placeholder="Preço (USDC)" id="price" value="">
+                <button onclick="setMarketPrice()">Usar Preço Atual</button>
+            </div>
+
+            <div class="input-group">
+                <button class="btn-buy" onclick="placeOrder('buy')">COMPRAR</button>
+                <button class="btn-sell" onclick="placeOrder('sell')">VENDER</button>
+            </div>
+        </div>
+    </div>
 
 <script>
-let walletAddress = '';
-let isConnected = false;
+    let chart;
+    let candleSeries;
 
-const ARBITRUM_CHAIN_ID = '0xa4b1';
-const ARBITRUM_RPC = 'https://arb1.arbitrum.io/rpc';
-const ARBITRUM_EXPLORER = 'https://arbiscan.io';
-
-function log(msg, type = 'info') {
-    try {
-        const logs = document.getElementById('logs');
-        if (!logs) return;
-        const div = document.createElement('div');
-        div.className = 'log';
-        if (type === 'error') div.style.color = '#ff3366';
-        if (type === 'success') div.style.color = '#00ff88';
-        if (type === 'warning') div.style.color = '#ffcc00';
-        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        logs.appendChild(div);
-        logs.scrollTop = logs.scrollHeight;
-        console.log(`[${type}] ${msg}`);
-    } catch(e) {
-        console.error("Erro ao escrever log:", e);
-    }
-}
-
-function setCheck(id, status) {
-    try {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.className = 'icon ' + status;
-        el.textContent = status === 'done' ? '✓' : status === 'error' ? '✗' : '?';
-    } catch(e) {
-        console.error("Erro ao atualizar checklist:", e);
-    }
-}
-
-function setStatus(msg, isError = false) {
-    try {
-        const statusEl = document.getElementById('status');
-        const errorEl = document.getElementById('error');
-        if (statusEl) statusEl.textContent = msg;
-        if (errorEl) {
-            if (isError) {
-                errorEl.textContent = msg;
-                errorEl.style.display = 'block';
-            } else {
-                errorEl.textContent = '';
-                errorEl.style.display = 'none';
-            }
-        }
-    } catch(e) {
-        console.error("Erro ao atualizar status:", e);
-    }
-}
-
-async function connectWallet() {
-    try {
-        log("Iniciando conexão...", 'info');
-        setCheck('c1', 'pending');
-
-        let provider = null;
-        let providerName = 'Desconhecido';
-
-        if (typeof window.okxwallet !== 'undefined') {
-            if (window.okxwallet.isOkx) {
-                provider = window.okxwallet;
-                providerName = 'OKX Wallet Nativa';
-                log("✅ OKX Wallet nativa detectada", 'success');
-                setCheck('c1', 'done');
-            } else {
-                log("⚠️ window.okxwallet existe mas não é OKX", 'warning');
-            }
+    // Carregar dados da carteira salva
+    window.onload = () => {
+        const wallet = localStorage.getItem('hyperliquid_wallet');
+        const provider = localStorage.getItem('hyperliquid_provider') || 'desconhecido';
+        
+        if (wallet) {
+            document.getElementById('wallet-address').innerText = `Carteira: ${wallet.substr(0, 6)}...${wallet.substr(-4)} | ${provider}`;
+        } else {
+            document.getElementById('wallet-address').innerText = 'Carteira não conectada — volte à landing page';
         }
 
-        if (!provider && typeof window.ethereum !== 'undefined') {
-            provider = window.ethereum;
-            providerName = 'Provider Ethereum (MetaMask/Rabby/OKX Compat)';
-            log("⚠️ Usando provider ethereum genérico", 'warning');
-            setCheck('c1', 'done');
-        }
+        initChart();
+        fetchCurrentPrice();
+        setInterval(fetchCurrentPrice, 5000); // Atualiza preço a cada 5 segundos
+    };
 
-        if (!provider) {
-            throw new Error("Nenhuma carteira Web3 encontrada! Instale a OKX Wallet ou MetaMask.");
-        }
+    function initChart() {
+        const chartContainer = document.getElementById('chart-container');
+        chart = LightweightCharts.createChart(chartContainer, {
+            width: chartContainer.clientWidth,
+            height: chartContainer.clientHeight,
+            layout: { backgroundColor: '#121220', textColor: '#d1d4dc' },
+            grid: { vertLines: { color: '#2B2B43' }, horzLines: { color: '#2B2B43' } },
+            rightPriceScale: { borderColor: '#2B2B43' },
+            timeScale: { borderColor: '#2B2B43' },
+        });
 
-        setCheck('c2', 'pending');
-        log("Solicitando contas...", 'info');
+        candleSeries = chart.addCandlestickSeries({
+            upColor: '#00ff88',
+            downColor: '#ff3366',
+            borderVisible: false,
+            wickUpColor: '#00ff88',
+            wickDownColor: '#ff3366',
+        });
 
-        const accounts = await Promise.race([
-            provider.request({ method: 'eth_requestAccounts' }),
-            new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Timeout: Carteira não respondeu")), 10000)
-            )
-        ]);
-
-        if (!accounts || accounts.length === 0) {
-            throw new Error("Nenhuma conta retornada pela carteira. Certifique-se de ter criado uma conta dentro da extensão.");
-        }
-
-        walletAddress = accounts[0];
-        log(`Conta recebida: ${walletAddress}`, 'success');
-        setCheck('c2', 'done');
-
-        setCheck('c3', 'pending');
-        log("Verificando rede...", 'info');
-        const chainId = await provider.request({ method: 'eth_chainId' });
-        log(`Chain ID atual: ${chainId}`, 'info');
-
-        if (chainId !== ARBITRUM_CHAIN_ID) {
-            log("Trocando para Arbitrum...", 'info');
-            try {
-                await provider.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: ARBITRUM_CHAIN_ID }]
+        window.addEventListener('resize', () => {
+            if (chart) {
+                chart.applyOptions({ 
+                    width: chartContainer.clientWidth, 
+                    height: chartContainer.clientHeight 
                 });
-                log("Rede trocada com sucesso!", 'success');
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    log("Adicionando rede Arbitrum...", 'info');
-                    await provider.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{
-                            chainId: ARBITRUM_CHAIN_ID,
-                            chainName: 'Arbitrum One',
-                            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                            rpcUrls: [ARBITRUM_RPC],
-                            blockExplorerUrls: [ARBITRUM_EXPLORER]
-                        }]
-                    });
-                    log("Rede adicionada com sucesso!", 'success');
-                } else {
-                    throw switchError;
-                }
             }
-        }
-        setCheck('c3', 'done');
+        });
 
-        setCheck('c4', 'pending');
-        log("Salvando dados...", 'info');
-        localStorage.setItem('hyperliquid_wallet', walletAddress);
-        localStorage.setItem('hyperliquid_chain', 'arbitrum');
-        localStorage.setItem('hyperliquid_provider', providerName);
-        log("Dados salvos!", 'success');
-        setCheck('c4', 'done');
+        loadHistoricalData();
+    }
 
-        setCheck('c5', 'pending');
-        log("Atualizando interface...", 'info');
-        setStatus(`Carteira conectada: ${walletAddress.substr(0,6)}...${walletAddress.substr(-4)} | Provider: ${providerName}`, false);
-        document.getElementById('connectBtn').textContent = '✅ Conectado';
-        document.getElementById('connectBtn').style.background = '#2d2d4a';
-        document.getElementById('connectBtn').style.color = '#00ff88';
-        log("Interface atualizada!", 'success');
-        setCheck('c5', 'done');
-
-        alert(`Sucesso!\nEndereço: ${walletAddress}\nRede: Arbitrum One\nProvider: ${providerName}`);
-
-    } catch (error) {
-        console.error(error);
-        let msg = error.message || "Erro desconhecido";
-        log(`ERRO: ${msg}`, 'error');
-        setStatus(msg, true);
-
-        if (msg.includes("must has at least one account")) {
-            setCheck('c2', 'error');
-            
-            const instructionBox = document.createElement('div');
-            instructionBox.style.cssText = 'background:#220000; color:#ff6666; padding:15px; border-radius:8px; margin:15px 0; font-size:14px; line-height:1.5; max-width: 600px; text-align: left;';
-            instructionBox.innerHTML = `
-                <strong>🚨 ERRO CRÍTICO:</strong> A carteira diz que não tem contas.<br><br>
-                <strong>✅ SOLUÇÃO PASSO A PASSO:</strong><br>
-                1. Abra a EXTENSÃO da OKX Wallet (clique no ícone 🦊 no canto superior direito do navegador)<br>
-                2. Clique em <strong>"Create Wallet"</strong> ou <strong>"+"</strong> para adicionar conta<br>
-                3. Siga os passos (defina senha, anote seed phrase)<br>
-                4. <strong>RECARGUE ESTA PÁGINA</strong> (pressione F5)<br>
-                5. Tente conectar novamente<br><br>
-                <em>Dica: Após criar a conta, volte aqui e clique em "Conectar Carteira" novamente.</em><br><br>
-                <strong>ℹ️ Nota técnica:</strong> Você está usando o provider: <code>${providerName}</code>. 
-                Se possível, tente usar a OKX Wallet nativa diretamente.
-            `;
-            document.querySelector('.main').appendChild(instructionBox);
-            
-            log("Instruções exibidas na interface", 'info');
-        } else if (msg.includes("Timeout")) {
-            setCheck('c2', 'error');
-            alert("⏱️ Tempo esgotado! A carteira não respondeu.\n\nTente:\n1. Recarregar a página\n2. Verificar se a extensão da carteira está ativa\n3. Tentar conectar novamente");
-        } else {
-            setCheck('c3', 'error');
-            alert(`Erro ao conectar: ${msg}\n\nVerifique a barra lateral direita para detalhes.`);
+    async function fetchCurrentPrice() {
+        try {
+            const response = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'allMids' })
+            });
+            const data = await response.json();
+            const btcPrice = parseFloat(data.BTC).toFixed(2);
+            document.getElementById('current-price').innerText = `$${btcPrice}`;
+            if (document.getElementById('price').value === '') {
+                document.getElementById('price').value = btcPrice;
+            }
+        } catch (error) {
+            console.error('Erro ao buscar preço:', error);
+            document.getElementById('current-price').innerText = 'Erro';
         }
     }
-}
 
-function simulateConnection() {
-    const fakeAddress = "0x1234567890abcdef1234567890abcdef12345678";
-    const fakeProvider = "Simulado (Dev Mode)";
-    
-    setStatus(`Carteira simulada: ${fakeAddress.substr(0,6)}...${fakeAddress.substr(-4)} | Provider: ${fakeProvider}`, false);
-    document.getElementById('connectBtn').textContent = '✅ Conectado (Simulado)';
-    document.getElementById('connectBtn').style.background = '#2d2d4a';
-    document.getElementById('connectBtn').style.color = '#00ff88';
-    
-    setCheck('c1', 'done');
-    setCheck('c2', 'done');
-    setCheck('c3', 'done');
-    setCheck('c4', 'done');
-    setCheck('c5', 'done');
-    
-    localStorage.setItem('hyperliquid_wallet', fakeAddress);
-    localStorage.setItem('hyperliquid_chain', 'arbitrum');
-    localStorage.setItem('hyperliquid_provider', fakeProvider);
-    
-    log("Conexão simulada com sucesso!", 'success');
-    alert("Modo Desenvolvedor ativado! Você pode prosseguir para o Trader.");
-}
-
-window.onload = function() {
-    try {
-        log("Página carregada com sucesso!", 'success');
-        const saved = localStorage.getItem('hyperliquid_wallet');
-        if (saved) {
-            const providerSaved = localStorage.getItem('hyperliquid_provider') || 'desconhecido';
-            setStatus(`Carteira salva: ${saved.substr(0,6)}...${saved.substr(-4)} | Provider: ${providerSaved}`, false);
-            document.getElementById('connectBtn').textContent = '✅ Conectado (salvo)';
-            document.getElementById('connectBtn').style.background = '#2d2d4a';
-            document.getElementById('connectBtn').style.color = '#00ff88';
-            setCheck('c4', 'done');
-            setCheck('c5', 'done');
-            log("Carteira restaurada do localStorage", 'success');
-        } else {
-            log("Nenhuma carteira salva.", 'info');
-        }
-    } catch(e) {
-        console.error("Erro ao carregar página:", e);
-        log("Erro ao carregar página: " + e.message, 'error');
+    function setMarketPrice() {
+        const price = document.getElementById('current-price').innerText.replace('$', '');
+        document.getElementById('price').value = price;
     }
-};
+
+    function placeOrder(side) {
+        const amount = document.getElementById('amount').value;
+        const price = document.getElementById('price').value;
+        const type = document.getElementById('order-type').value;
+
+        alert(`Ordem ${side.toUpperCase()} enviada:\nQuantidade: ${amount} BTC\nPreço: $${price}\nTipo: ${type}\n\n(Esta é uma simulação — integração real vem depois!)`);
+    }
+
+    function loadHistoricalData() {
+        const now = Math.floor(Date.now() / 1000);
+        const candles = [];
+        let price = 79000;
+        for (let i = 0; i < 100; i++) {
+            const open = price;
+            const close = price + (Math.random() - 0.5) * 500;
+            const high = Math.max(open, close) + Math.random() * 200;
+            const low = Math.min(open, close) - Math.random() * 200;
+            candles.push({
+                time: now - (100 - i) * 60,
+                open, high, low, close
+            });
+            price = close;
+        }
+        candleSeries.setData(candles);
+    }
 </script>
 
 </body>
