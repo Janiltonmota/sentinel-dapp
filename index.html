@@ -447,6 +447,18 @@
     transform: translateY(-2px);
   }
 
+  /* Estilo para carteiras desativadas */
+  .wallet-item.disabled {
+    opacity: 0.3;
+    filter: grayscale(1);
+    cursor: not-allowed;
+  }
+  .wallet-item.disabled:hover {
+    transform: none;
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(74,144,226,0.1);
+  }
+
   .wallet-logo {
     width: 36px; height: 36px;
     border-radius: 10px;
@@ -509,29 +521,30 @@
 
     <div class="wallet-grid">
 
-      <!-- ATIVAS -->
-      <a class="wallet-item" href="#" onclick="return false;">
+      <!-- MetaMask - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#f5841f1a;">
           <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width="28" height="28" alt="MetaMask" onerror="this.style.display='none';this.parentElement.textContent='🦊'">
         </div>
         <div>
           <div class="wallet-name">MetaMask</div>
-          <div class="wallet-tag">Popular</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;">
+      <!-- WalletConnect - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#3b99fc1a;">
           <img src="https://altcoinsbox.com/wp-content/uploads/2023/01/wallet-connect-logo.png" width="28" height="28" alt="WalletConnect" onerror="this.style.display='none';this.parentElement.textContent='🔗'">
         </div>
         <div>
           <div class="wallet-name">WalletConnect</div>
-          <div class="wallet-tag">Universal</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
         </div>
       </a>
 
-      <!-- OKX WALLET (ADICIONADA NO LUGAR DA COINBASE) -->
-      <a class="wallet-item" href="#" onclick="return false;">
+      <!-- OKX WALLET - ATIVA (abre popup da extensão) -->
+      <a class="wallet-item" href="#" onclick="connectOKXWallet(event);">
         <div class="wallet-logo" style="background:#0a0a0a; border-radius:10px; overflow:hidden;">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="32" height="32" fill="#000"/>
@@ -548,8 +561,8 @@
         </div>
       </a>
 
-      <!-- DESATIVADAS -->
-      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;" onmouseenter="this.style.transform=''" onmouseleave="">
+      <!-- Phantom - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#9945ff1a; font-size:1.4rem;">🌐</div>
         <div>
           <div class="wallet-name">Phantom</div>
@@ -557,7 +570,8 @@
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <!-- Brave Wallet - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#e8831a1a; font-size:1.4rem;">🦁</div>
         <div>
           <div class="wallet-name">Brave Wallet</div>
@@ -565,7 +579,8 @@
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <!-- Trust Wallet - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#1199fa1a; font-size:1.4rem;">💎</div>
         <div>
           <div class="wallet-name">Trust Wallet</div>
@@ -573,7 +588,8 @@
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <!-- Exodus - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#ff00801a; font-size:1.4rem;">🔺</div>
         <div>
           <div class="wallet-name">Exodus</div>
@@ -581,7 +597,8 @@
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <!-- Ledger - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#ffd7001a; font-size:1.4rem;">⚡</div>
         <div>
           <div class="wallet-name">Ledger</div>
@@ -589,7 +606,8 @@
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <!-- Trezor - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#00d3951a; font-size:1.4rem;">🔐</div>
         <div>
           <div class="wallet-name">Trezor</div>
@@ -597,7 +615,8 @@
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <!-- Rainbow - DESATIVADA -->
+      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#6c47ff1a; font-size:1.4rem;">🌀</div>
         <div>
           <div class="wallet-name">Rainbow</div>
@@ -675,8 +694,48 @@
 </section>
 
 <footer>
-  © 2025 BlueStudio. Todos os direitos reservados.
+  © 2025 Janilton Mota. Todos os direitos reservados.
 </footer>
+
+<script>
+  // Função para conectar à OKX Wallet
+  async function connectOKXWallet(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Fecha o modal
+    document.getElementById('walletModal').classList.remove('open');
+
+    // Verifica se a extensão da OKX Wallet está instalada
+    if (typeof window.okxwallet !== 'undefined') {
+      try {
+        // Solicita conexão com a carteira OKX
+        const accounts = await window.okxwallet.request({ method: 'eth_requestAccounts' });
+        
+        if (accounts && accounts.length > 0) {
+          console.log('Conectado com sucesso à OKX Wallet:', accounts[0]);
+          alert('Conectado à OKX Wallet com sucesso!\nEndereço: ' + accounts[0].substring(0, 10) + '...');
+          // Aqui você pode adicionar lógica adicional pós-conexão
+        } else {
+          alert('Nenhuma conta encontrada na OKX Wallet.');
+        }
+      } catch (error) {
+        console.error('Erro ao conectar à OKX Wallet:', error);
+        if (error.code === 4001) {
+          alert('Conexão recusada pelo usuário.');
+        } else {
+          alert('Erro ao conectar à OKX Wallet. Tente novamente.');
+        }
+      }
+    } else {
+      // Extensão não encontrada - oferece para baixar
+      const wantInstall = confirm('OKX Wallet não está instalada. Deseja instalar a extensão?');
+      if (wantInstall) {
+        window.open('https://www.okx.com/web3', '_blank');
+      }
+    }
+  }
+</script>
 
 </body>
 </html>
