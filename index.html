@@ -1,3 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Hyperliquid Custom - Landing</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f0f1a;
+            color: #e0e0ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+        }
+        .main {
+            flex: 1;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+        .sidebar {
+            width: 300px;
+            background: #111;
+            border-left: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        h1 { 
+            color: #00ff88; 
+            font-size: 48px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        p { font-size: 18px; color: #ccc; }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #00ff88;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+        button:hover { 
+            background: #00cc6a; 
+            transform: scale(1.05);
+        }
+        .status { 
+            margin: 20px 0; 
+            font-size: 14px; 
+            min-height: 20px;
+        }
+        .error { 
+            color: #ff3366; 
+            margin-top: 10px;
+            min-height: 20px;
+        }
+        .success { color: #00ff88; }
+        .log { 
+            font-family: monospace; 
+            font-size: 12px; 
+            background: #1a1a1a; 
+            padding: 5px; 
+            margin: 5px 0; 
+            border-radius: 3px; 
+            word-break: break-all;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .pending { background: #555; color: white; }
+        .done { background: #00ff88; color: black; }
+        .error-icon { background: #ff3366; color: white; }
+        
+        /* Botão de simulação */
+        .dev-btn {
+            background: #555 !important;
+            color: white !important;
+            margin-top: 10px;
+        }
+        .dev-btn:hover {
+            background: #777 !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main">
+    <h1>HYPERLIQUID CUSTOM</h1>
+    <p>Seu terminal de trading personalizado. Conecte sua carteira na Arbitrum.</p>
+    
+    <button id="connectBtn" onclick="connectWallet()">🦊 Conectar Carteira</button>
+    
+    <!-- Botão de Simulação para Desenvolvimento -->
+    <button class="dev-btn" onclick="simulateConnection()">🛠️ Simular Conexão (Dev Mode)</button>
+    
+    <div class="status" id="status">Aguardando conexão...</div>
+    <div class="error" id="error"></div>
+</div>
+
+<div class="sidebar">
+    <h3>📋 Checklist</h3>
+    <div class="checklist-item"><div class="icon pending" id="c1">?</div> Provedor Web3</div>
+    <div class="checklist-item"><div class="icon pending" id="c2">?</div> Contas</div>
+    <div class="checklist-item"><div class="icon pending" id="c3">?</div> Rede Arbitrum</div>
+    <div class="checklist-item"><div class="icon pending" id="c4">?</div> Salvar dados</div>
+    <div class="checklist-item"><div class="icon pending" id="c5">?</div> Interface</div>
+
+    <h3>🪵 Logs</h3>
+    <div id="logs"></div>
+</div>
+
 <script>
 let walletAddress = '';
 let isConnected = false;
@@ -197,6 +324,32 @@ async function connectWallet() {
     }
 }
 
+function simulateConnection() {
+    const fakeAddress = "0x1234567890abcdef1234567890abcdef12345678";
+    const fakeProvider = "Simulado (Dev Mode)";
+    
+    // Atualiza UI
+    setStatus(`Carteira simulada: ${fakeAddress.substr(0,6)}...${fakeAddress.substr(-4)} | Provider: ${fakeProvider}`, false);
+    document.getElementById('connectBtn').textContent = '✅ Conectado (Simulado)';
+    document.getElementById('connectBtn').style.background = '#2d2d4a';
+    document.getElementById('connectBtn').style.color = '#00ff88';
+    
+    // Atualiza Checklist
+    setCheck('c1', 'done');
+    setCheck('c2', 'done');
+    setCheck('c3', 'done');
+    setCheck('c4', 'done');
+    setCheck('c5', 'done');
+    
+    // Salva no localStorage
+    localStorage.setItem('hyperliquid_wallet', fakeAddress);
+    localStorage.setItem('hyperliquid_chain', 'arbitrum');
+    localStorage.setItem('hyperliquid_provider', fakeProvider);
+    
+    log("Conexão simulada com sucesso!", 'success');
+    alert("Modo Desenvolvedor ativado! Você pode prosseguir para o Trader.");
+}
+
 // Ao carregar a página
 window.onload = function() {
     try {
@@ -220,3 +373,6 @@ window.onload = function() {
     }
 };
 </script>
+
+</body>
+</html>
