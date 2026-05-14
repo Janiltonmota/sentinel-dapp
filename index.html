@@ -509,6 +509,7 @@
 
     <div class="wallet-grid">
 
+      <!-- ATIVAS -->
       <a class="wallet-item" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#f5841f1a;">
           <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width="28" height="28" alt="MetaMask" onerror="this.style.display='none';this.parentElement.textContent='🦊'">
@@ -530,68 +531,76 @@
       </a>
 
       <a class="wallet-item" href="#" onclick="return false;">
-        <div class="wallet-logo" style="background:#0052ff1a;">
-          <img src="https://altcoinsbox.com/wp-content/uploads/2023/03/coinbase-wallet-logo.png" width="28" height="28" alt="Coinbase" onerror="this.style.display='none';this.parentElement.textContent='💙'">
+        <div class="wallet-logo" style="background:#0a0a0a; border-radius:10px; overflow:hidden;">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" fill="#000"/>
+            <path d="M19.6 12.4H12.4V19.6H19.6V12.4Z" fill="white"/>
+            <path d="M12.4 6H6V12.4H12.4V6Z" fill="white"/>
+            <path d="M26 6H19.6V12.4H26V6Z" fill="white"/>
+            <path d="M12.4 19.6H6V26H12.4V19.6Z" fill="white"/>
+            <path d="M26 19.6H19.6V26H26V19.6Z" fill="white"/>
+          </svg>
         </div>
         <div>
-          <div class="wallet-name">Coinbase</div>
-          <div class="wallet-tag">Wallet</div>
-        </div>
-      </a>
-
-      <a class="wallet-item" href="#" onclick="return false;">
-        <div class="wallet-logo" style="background:#9945ff1a; font-size:1.4rem;">🌐</div>
-        <div>
-          <div class="wallet-name">Phantom</div>
-          <div class="wallet-tag">Solana</div>
-        </div>
-      </a>
-
-      <a class="wallet-item" href="#" onclick="return false;">
-        <div class="wallet-logo" style="background:#e8831a1a; font-size:1.4rem;">🦁</div>
-        <div>
-          <div class="wallet-name">Brave Wallet</div>
-          <div class="wallet-tag">Browser</div>
-        </div>
-      </a>
-
-      <a class="wallet-item" href="#" onclick="return false;">
-        <div class="wallet-logo" style="background:#1199fa1a; font-size:1.4rem;">💎</div>
-        <div>
-          <div class="wallet-name">Trust Wallet</div>
-          <div class="wallet-tag">Mobile</div>
-        </div>
-      </a>
-
-      <a class="wallet-item" href="#" onclick="return false;">
-        <div class="wallet-logo" style="background:#ff00801a; font-size:1.4rem;">🔺</div>
-        <div>
-          <div class="wallet-name">Exodus</div>
+          <div class="wallet-name">OKX Wallet</div>
           <div class="wallet-tag">Multi-chain</div>
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;">
+      <!-- DESATIVADAS -->
+      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;" onmouseenter="this.style.transform=''" onmouseleave="">
+        <div class="wallet-logo" style="background:#9945ff1a; font-size:1.4rem;">🌐</div>
+        <div>
+          <div class="wallet-name">Phantom</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
+        </div>
+      </a>
+
+      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+        <div class="wallet-logo" style="background:#e8831a1a; font-size:1.4rem;">🦁</div>
+        <div>
+          <div class="wallet-name">Brave Wallet</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
+        </div>
+      </a>
+
+      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+        <div class="wallet-logo" style="background:#1199fa1a; font-size:1.4rem;">💎</div>
+        <div>
+          <div class="wallet-name">Trust Wallet</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
+        </div>
+      </a>
+
+      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+        <div class="wallet-logo" style="background:#ff00801a; font-size:1.4rem;">🔺</div>
+        <div>
+          <div class="wallet-name">Exodus</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
+        </div>
+      </a>
+
+      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#ffd7001a; font-size:1.4rem;">⚡</div>
         <div>
           <div class="wallet-name">Ledger</div>
-          <div class="wallet-tag">Hardware</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;">
+      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#00d3951a; font-size:1.4rem;">🔐</div>
         <div>
           <div class="wallet-name">Trezor</div>
-          <div class="wallet-tag">Hardware</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
         </div>
       </a>
 
-      <a class="wallet-item" href="#" onclick="return false;">
+      <a class="wallet-item" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
         <div class="wallet-logo" style="background:#6c47ff1a; font-size:1.4rem;">🌀</div>
         <div>
           <div class="wallet-name">Rainbow</div>
-          <div class="wallet-tag">Ethereum</div>
+          <div class="wallet-tag" style="font-style:italic;">Em breve</div>
         </div>
       </a>
 
