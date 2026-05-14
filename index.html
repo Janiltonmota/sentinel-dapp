@@ -4,34 +4,62 @@
     <meta charset="UTF-8">
     <title>Hyperliquid Custom - Landing</title>
     <style>
-        body {
+        /* Reset total */
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Evita scroll desnecessário */
+        }
+
+        body {
             background: #0f0f1a;
             color: #e0e0ff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
             display: flex;
         }
+
         .main {
             flex: 1;
-            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
+            padding: 20px;
             position: relative;
+            min-height: 100vh;
         }
+
         .sidebar {
             width: 300px;
             background: #111;
             border-left: 1px solid #333;
             padding: 20px;
             overflow-y: auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+
         h1 { 
             color: #00ff88; 
             font-size: 48px;
             text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            margin-bottom: 10px;
         }
-        p { font-size: 18px; color: #ccc; }
+
+        p { 
+            font-size: 18px; 
+            color: #ccc; 
+            margin-bottom: 30px;
+        }
+
         button {
             padding: 15px 30px;
             font-size: 16px;
@@ -40,24 +68,30 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin: 20px 0;
+            margin: 10px 0;
             transition: all 0.3s;
+            min-width: 250px;
         }
+
         button:hover { 
             background: #00cc6a; 
             transform: scale(1.05);
         }
+
         .status { 
             margin: 20px 0; 
             font-size: 14px; 
             min-height: 20px;
         }
+
         .error { 
             color: #ff3366; 
             margin-top: 10px;
             min-height: 20px;
         }
+
         .success { color: #00ff88; }
+
         .log { 
             font-family: monospace; 
             font-size: 12px; 
@@ -67,12 +101,14 @@
             border-radius: 3px; 
             word-break: break-all;
         }
+
         .checklist-item {
             display: flex;
             align-items: center;
             gap: 10px;
             margin: 10px 0;
         }
+
         .icon {
             width: 20px;
             height: 20px;
@@ -83,18 +119,39 @@
             font-weight: bold;
             font-size: 12px;
         }
+
         .pending { background: #555; color: white; }
         .done { background: #00ff88; color: black; }
         .error-icon { background: #ff3366; color: white; }
-        
+
         /* Botão de simulação */
         .dev-btn {
             background: #555 !important;
             color: white !important;
-            margin-top: 10px;
         }
+
         .dev-btn:hover {
             background: #777 !important;
+        }
+
+        /* Responsividade básica */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                border-left: none;
+                border-top: 1px solid #333;
+            }
+            .main {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
@@ -122,7 +179,7 @@
     <div class="checklist-item"><div class="icon pending" id="c5">?</div> Interface</div>
 
     <h3>🪵 Logs</h3>
-    <div id="logs"></div>
+    <div id="logs" style="flex: 1; overflow-y: auto;"></div>
 </div>
 
 <script>
@@ -186,11 +243,9 @@ async function connectWallet() {
         log("Iniciando conexão...", 'info');
         setCheck('c1', 'pending');
 
-        // ➤ DETECÇÃO ROBUSTA DE PROVIDERS
         let provider = null;
         let providerName = 'Desconhecido';
 
-        // Prioridade máxima: OKX Wallet nativa
         if (typeof window.okxwallet !== 'undefined') {
             if (window.okxwallet.isOkx) {
                 provider = window.okxwallet;
@@ -202,7 +257,6 @@ async function connectWallet() {
             }
         }
 
-        // Fallback: ethereum (pode ser MetaMask, Rabby, ou OKX em modo compat)
         if (!provider && typeof window.ethereum !== 'undefined') {
             provider = window.ethereum;
             providerName = 'Provider Ethereum (MetaMask/Rabby/OKX Compat)';
@@ -210,7 +264,6 @@ async function connectWallet() {
             setCheck('c1', 'done');
         }
 
-        // Último recurso: nenhum provider
         if (!provider) {
             throw new Error("Nenhuma carteira Web3 encontrada! Instale a OKX Wallet ou MetaMask.");
         }
@@ -218,7 +271,6 @@ async function connectWallet() {
         setCheck('c2', 'pending');
         log("Solicitando contas...", 'info');
 
-        // TENTA CONECTAR COM TIMEOUT
         const accounts = await Promise.race([
             provider.request({ method: 'eth_requestAccounts' }),
             new Promise((_, reject) => 
@@ -296,7 +348,6 @@ async function connectWallet() {
         if (msg.includes("must has at least one account")) {
             setCheck('c2', 'error');
             
-            // MOSTRAR INSTRUÇÕES DETALHADAS NA INTERFACE
             const instructionBox = document.createElement('div');
             instructionBox.style.cssText = 'background:#220000; color:#ff6666; padding:15px; border-radius:8px; margin:15px 0; font-size:14px; line-height:1.5; max-width: 600px; text-align: left;';
             instructionBox.innerHTML = `
@@ -328,20 +379,17 @@ function simulateConnection() {
     const fakeAddress = "0x1234567890abcdef1234567890abcdef12345678";
     const fakeProvider = "Simulado (Dev Mode)";
     
-    // Atualiza UI
     setStatus(`Carteira simulada: ${fakeAddress.substr(0,6)}...${fakeAddress.substr(-4)} | Provider: ${fakeProvider}`, false);
     document.getElementById('connectBtn').textContent = '✅ Conectado (Simulado)';
     document.getElementById('connectBtn').style.background = '#2d2d4a';
     document.getElementById('connectBtn').style.color = '#00ff88';
     
-    // Atualiza Checklist
     setCheck('c1', 'done');
     setCheck('c2', 'done');
     setCheck('c3', 'done');
     setCheck('c4', 'done');
     setCheck('c5', 'done');
     
-    // Salva no localStorage
     localStorage.setItem('hyperliquid_wallet', fakeAddress);
     localStorage.setItem('hyperliquid_chain', 'arbitrum');
     localStorage.setItem('hyperliquid_provider', fakeProvider);
@@ -350,7 +398,6 @@ function simulateConnection() {
     alert("Modo Desenvolvedor ativado! Você pode prosseguir para o Trader.");
 }
 
-// Ao carregar a página
 window.onload = function() {
     try {
         log("Página carregada com sucesso!", 'success');
