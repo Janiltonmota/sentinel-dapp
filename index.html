@@ -1,554 +1,439 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Hyperliquid Custom - Landing</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Landing Page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
+  :root {
+    --blue-deep: #0a1628;
+    --blue-mid: #0d2b6b;
+    --blue-vivid: #1a4fd8;
+    --blue-light: #4a90e2;
+    --blue-glow: #2563eb;
+    --black: #000000;
+    --text-bright: #f0f6ff;
+    --text-muted: #8ba5c8;
+  }
 
-        body {
-            background: #0f0f1a;
-            color: #e0e0ff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-        }
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--black);
+    color: var(--text-bright);
+    overflow-x: hidden;
+  }
 
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            position: relative;
-        }
+  /* Gradiente principal */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, #1a3a8f 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, #0d1f5e 0%, transparent 60%),
+      linear-gradient(175deg, #040c1f 0%, #000000 55%, #010510 100%);
+    z-index: 0;
+  }
 
-        .sidebar {
-            width: 300px;
-            background: #111;
-            border-left: 1px solid #333;
-            padding: 20px;
-            overflow-y: auto;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+  /* Partículas decorativas */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(74,144,226,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 15%, rgba(74,144,226,0.3) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 80% 50%, rgba(26,79,216,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 70%, rgba(74,144,226,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 25%, rgba(100,160,240,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 80%, rgba(74,144,226,0.2) 0%, transparent 100%);
+    z-index: 0;
+  }
 
-        h1 { 
-            color: #00ff88; 
-            font-size: 48px;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-            margin-bottom: 10px;
-        }
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 3rem;
+    background: rgba(0,0,0,0.2);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(74,144,226,0.12);
+  }
 
-        p { 
-            font-size: 18px; 
-            color: #ccc; 
-            margin-bottom: 30px;
-        }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    color: var(--text-bright);
+    text-decoration: none;
+  }
 
-        .connect-btn {
-            padding: 15px 30px;
-            font-size: 16px;
-            background: #00ff88;
-            color: black;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px 0;
-            transition: all 0.3s;
-            min-width: 250px;
-        }
+  .logo span {
+    color: var(--blue-light);
+  }
 
-        .connect-btn:hover { 
-            background: #00cc6a; 
-            transform: scale(1.05);
-        }
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
 
-        .status { 
-            margin: 20px 0; 
-            font-size: 14px; 
-            min-height: 20px;
-        }
+  .nav-links a {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: color 0.2s;
+  }
 
-        .error { 
-            color: #ff3366; 
-            margin-top: 10px;
-            min-height: 20px;
-        }
+  .nav-links a:hover { color: var(--text-bright); }
 
-        .success { color: #00ff88; }
+  /* BOTÃO PRINCIPAL — bordas suaves, preto */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.5rem;
+    background: transparent;
+    color: var(--text-bright);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.25s, border-color 0.25s, transform 0.15s;
+    white-space: nowrap;
+  }
 
-        .log { 
-            font-family: monospace; 
-            font-size: 12px; 
-            background: #1a1a1a; 
-            padding: 5px; 
-            margin: 5px 0; 
-            border-radius: 3px; 
-            word-break: break-all;
-        }
+  .btn-primary:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.45);
+    transform: translateY(-1px);
+  }
 
-        .checklist-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
+  .btn-primary:active { transform: translateY(0); }
 
-        .icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-        }
+  /* HERO */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+  }
 
-        .pending { background: #555; color: white; }
-        .done { background: #00ff88; color: black; }
-        .error-icon { background: #ff3366; color: white; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    background: rgba(26,79,216,0.15);
+    border: 1px solid rgba(74,144,226,0.3);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: var(--blue-light);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.8s ease forwards;
+    opacity: 0;
+  }
 
-        /* Modal de Carteiras */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue-light);
+    box-shadow: 0 0 8px var(--blue-light);
+    animation: pulse 2s infinite;
+  }
 
-        .modal-content {
-            background: #1a1a2e;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
-        }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
 
-        .modal-title {
-            font-size: 24px;
-            color: #00ff88;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    max-width: 820px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.8s 0.15s ease forwards;
+    opacity: 0;
+  }
 
-        .wallet-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+  h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #6baef6 0%, #4a90e2 40%, #7bb8ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-        .wallet-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px;
-            background: #2d2d4a;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+  .hero-sub {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.8s 0.3s ease forwards;
+    opacity: 0;
+  }
 
-        .wallet-item:hover {
-            background: #3d3d5a;
-            transform: translateX(5px);
-        }
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: fadeUp 0.8s 0.45s ease forwards;
+    opacity: 0;
+  }
 
-        .wallet-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+  .btn-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 2rem;
+    background: var(--blue-glow);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.25s, transform 0.15s, box-shadow 0.25s;
+    box-shadow: 0 0 30px rgba(37,99,235,0.4);
+  }
 
-        .wallet-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #00ff88;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
+  .btn-cta:hover {
+    background: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(59,130,246,0.5);
+  }
 
-        .wallet-name {
-            font-weight: bold;
-            color: white;
-        }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.75rem;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
 
-        .connect-wallet-btn {
-            padding: 8px 16px;
-            background: #00ff88;
-            color: black;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+  .btn-ghost:hover { color: var(--text-bright); }
+  .btn-ghost svg { transition: transform 0.2s; }
+  .btn-ghost:hover svg { transform: translateX(3px); }
 
-        .cancel-btn {
-            width: 100%;
-            padding: 12px;
-            background: #555;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
+  /* Linha decorativa */
+  .divider {
+    width: 100%;
+    max-width: 700px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(74,144,226,0.4), transparent);
+    margin: 5rem auto 0;
+    animation: fadeUp 0.8s 0.6s ease forwards;
+    opacity: 0;
+  }
 
-        .cancel-btn:hover {
-            background: #777;
-        }
+  /* SEÇÃO DE FEATURES */
+  .features {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem 8rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
 
-        .no-wallets {
-            text-align: center;
-            color: #aaa;
-            padding: 20px;
-        }
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(74,144,226,0.12);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: border-color 0.3s, background 0.3s, transform 0.3s;
+    animation: fadeUp 0.8s ease forwards;
+    opacity: 0;
+  }
 
-        /* Responsividade */
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                height: auto;
-                max-height: 40vh;
-                border-left: none;
-                border-top: 1px solid #333;
-            }
-            .main {
-                padding: 10px;
-            }
-            h1 {
-                font-size: 32px;
-            }
-        }
-    </style>
+  .card:hover {
+    border-color: rgba(74,144,226,0.35);
+    background: rgba(74,144,226,0.06);
+    transform: translateY(-4px);
+  }
+
+  .card-icon {
+    width: 44px; height: 44px;
+    background: rgba(26,79,216,0.2);
+    border: 1px solid rgba(74,144,226,0.25);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-icon svg {
+    width: 22px; height: 22px;
+    stroke: var(--blue-light);
+  }
+
+  .card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: var(--text-bright);
+  }
+
+  .card p {
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  /* ANIMAÇÃO */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card:nth-child(1) { animation-delay: 0.1s; }
+  .card:nth-child(2) { animation-delay: 0.2s; }
+  .card:nth-child(3) { animation-delay: 0.3s; }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid rgba(74,144,226,0.1);
+    font-size: 0.8rem;
+    color: rgba(139,165,200,0.4);
+  }
+
+  @media (max-width: 640px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+  }
+</style>
 </head>
 <body>
 
-<div class="main">
-    <h1>HYPERLIQUID CUSTOM</h1>
-    <p>Seu terminal de trading personalizado. Conecte sua carteira na Arbitrum.</p>
-    
-    <button class="connect-btn" onclick="openWalletModal()">🦊 Conectar Carteira</button>
-    
-    <div class="status" id="status">Aguardando conexão...</div>
-    <div class="error" id="error"></div>
-</div>
+<!-- NAVBAR -->
+<nav>
+  <a href="#" class="logo">Blue<span>Studio</span></a>
+  <ul class="nav-links">
+    <li><a href="#">Produto</a></li>
+    <li><a href="#">Recursos</a></li>
+    <li><a href="#">Preços</a></li>
+    <li><a href="#">Sobre</a></li>
+  </ul>
+  <a href="#" class="btn-primary">
+    Começar agora
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </a>
+</nav>
 
-<div class="sidebar">
-    <h3>📋 Checklist</h3>
-    <div class="checklist-item"><div class="icon pending" id="c1">?</div> Provedor Web3</div>
-    <div class="checklist-item"><div class="icon pending" id="c2">?</div> Contas</div>
-    <div class="checklist-item"><div class="icon pending" id="c3">?</div> Rede Arbitrum</div>
-    <div class="checklist-item"><div class="icon pending" id="c4">?</div> Salvar dados</div>
-    <div class="checklist-item"><div class="icon pending" id="c5">?</div> Interface</div>
+<!-- HERO -->
+<section class="hero">
+  <div class="badge">Novo lançamento 2025</div>
 
-    <h3>🪵 Logs</h3>
-    <div id="logs" style="flex: 1; overflow-y: auto;"></div>
-</div>
+  <h1>
+    O futuro começa<br>
+    com uma <em>decisão</em>
+  </h1>
 
-<!-- Modal de Seleção de Carteira -->
-<div class="modal-overlay" id="walletModal">
-    <div class="modal-content">
-        <h2 class="modal-title">Escolha sua Carteira</h2>
-        <div class="wallet-list" id="walletList">
-            <!-- Carteiras serão inseridas aqui via JS -->
-        </div>
-        <button class="cancel-btn" onclick="closeWalletModal()">Cancelar</button>
+  <p class="hero-sub">
+    Uma plataforma construída para quem pensa diferente. Acelere suas ideias e transforme visão em realidade com tecnologia de ponta.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#" class="btn-cta">
+      Explorar produto
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+    <a href="#" class="btn-ghost">
+      Ver demonstração
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="card">
+    <div class="card-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
     </div>
-</div>
+    <h3>Alta performance</h3>
+    <p>Infraestrutura otimizada para entregar velocidade máxima sem comprometer a estabilidade do seu produto.</p>
+  </div>
 
-<script>
-let walletAddress = '';
-let isConnected = false;
+  <div class="card">
+    <div class="card-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h3>Segurança total</h3>
+    <p>Proteção de ponta a ponta com criptografia avançada e monitoramento em tempo real para seus dados.</p>
+  </div>
 
-const ARBITRUM_CHAIN_ID = '0xa4b1';
-const ARBITRUM_RPC = 'https://arb1.arbitrum.io/rpc';
-const ARBITRUM_EXPLORER = 'https://arbiscan.io';
+  <div class="card">
+    <div class="card-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+      </svg>
+    </div>
+    <h3>Totalmente customizável</h3>
+    <p>Adapte cada detalhe ao seu fluxo de trabalho. Nossa plataforma cresce junto com as suas necessidades.</p>
+  </div>
+</section>
 
-function log(msg, type = 'info') {
-    try {
-        const logs = document.getElementById('logs');
-        if (!logs) return;
-        const div = document.createElement('div');
-        div.className = 'log';
-        if (type === 'error') div.style.color = '#ff3366';
-        if (type === 'success') div.style.color = '#00ff88';
-        if (type === 'warning') div.style.color = '#ffcc00';
-        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        logs.appendChild(div);
-        logs.scrollTop = logs.scrollHeight;
-        console.log(`[${type}] ${msg}`);
-    } catch(e) {
-        console.error("Erro ao escrever log:", e);
-    }
-}
-
-function setCheck(id, status) {
-    try {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.className = 'icon ' + status;
-        el.textContent = status === 'done' ? '✓' : status === 'error' ? '✗' : '?';
-    } catch(e) {
-        console.error("Erro ao atualizar checklist:", e);
-    }
-}
-
-function setStatus(msg, isError = false) {
-    try {
-        const statusEl = document.getElementById('status');
-        const errorEl = document.getElementById('error');
-        if (statusEl) statusEl.textContent = msg;
-        if (errorEl) {
-            if (isError) {
-                errorEl.textContent = msg;
-                errorEl.style.display = 'block';
-            } else {
-                errorEl.textContent = '';
-                errorEl.style.display = 'none';
-            }
-        }
-    } catch(e) {
-        console.error("Erro ao atualizar status:", e);
-    }
-}
-
-// ➤ FUNÇÃO PARA ABRIR MODAL DE CARTEIRAS
-function openWalletModal() {
-    const modal = document.getElementById('walletModal');
-    const walletList = document.getElementById('walletList');
-    walletList.innerHTML = ''; // Limpa lista anterior
-
-    let walletsFound = false;
-
-    // Detectar OKX Wallet
-    if (typeof window.okxwallet !== 'undefined') {
-        walletsFound = true;
-        addWalletItem(walletList, 'OKX Wallet', '🦊', () => connectToWallet(window.okxwallet, 'OKX Wallet'));
-    }
-
-    // Detectar MetaMask / outros via ethereum
-    if (typeof window.ethereum !== 'undefined') {
-        // Evitar duplicata se okxwallet também injetar ethereum
-        if (!window.okxwallet || !window.okxwallet.isOkx) {
-            walletsFound = true;
-            addWalletItem(walletList, 'MetaMask / Outras', '🦊', () => connectToWallet(window.ethereum, 'MetaMask / Outras'));
-        }
-    }
-
-    // Se nenhuma carteira encontrada
-    if (!walletsFound) {
-        walletList.innerHTML = '<div class="no-wallets">Nenhuma carteira Web3 detectada.<br><br>Instale a <strong>OKX Wallet</strong> ou <strong>MetaMask</strong> para continuar.</div>';
-    }
-
-    modal.style.display = 'flex';
-    log("Modal de carteiras aberto", 'info');
-}
-
-function closeWalletModal() {
-    document.getElementById('walletModal').style.display = 'none';
-    log("Modal de carteiras fechado", 'info');
-}
-
-function addWalletItem(container, name, icon, onClick) {
-    const item = document.createElement('div');
-    item.className = 'wallet-item';
-    item.onclick = onClick;
-    item.innerHTML = `
-        <div class="wallet-info">
-            <div class="wallet-icon">${icon}</div>
-            <div class="wallet-name">${name}</div>
-        </div>
-        <button class="connect-wallet-btn">Conectar</button>
-    `;
-    container.appendChild(item);
-}
-
-// ➤ FUNÇÃO PARA CONECTAR À CARTEIRA SELECIONADA
-async function connectToWallet(provider, providerName) {
-    closeWalletModal();
-    log(`Tentando conectar com: ${providerName}`, 'info');
-    setCheck('c1', 'pending');
-
-    try {
-        setCheck('c2', 'pending');
-        log("Solicitando contas...", 'info');
-
-        const accounts = await Promise.race([
-            provider.request({ method: 'eth_requestAccounts' }),
-            new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Timeout: Carteira não respondeu")), 10000)
-            )
-        ]);
-
-        if (!accounts || accounts.length === 0) {
-            throw new Error("Nenhuma conta retornada pela carteira. Certifique-se de ter criado uma conta dentro da extensão.");
-        }
-
-        walletAddress = accounts[0];
-        log(`Conta recebida: ${walletAddress}`, 'success');
-        setCheck('c2', 'done');
-
-        setCheck('c3', 'pending');
-        log("Verificando rede...", 'info');
-        const chainId = await provider.request({ method: 'eth_chainId' });
-        log(`Chain ID atual: ${chainId}`, 'info');
-
-        if (chainId !== ARBITRUM_CHAIN_ID) {
-            log("Trocando para Arbitrum...", 'info');
-            try {
-                await provider.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: ARBITRUM_CHAIN_ID }]
-                });
-                log("Rede trocada com sucesso!", 'success');
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    log("Adicionando rede Arbitrum...", 'info');
-                    await provider.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{
-                            chainId: ARBITRUM_CHAIN_ID,
-                            chainName: 'Arbitrum One',
-                            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                            rpcUrls: [ARBITRUM_RPC],
-                            blockExplorerUrls: [ARBITRUM_EXPLORER]
-                        }]
-                    });
-                    log("Rede adicionada com sucesso!", 'success');
-                } else {
-                    throw switchError;
-                }
-            }
-        }
-        setCheck('c3', 'done');
-
-        setCheck('c4', 'pending');
-        log("Salvando dados...", 'info');
-        localStorage.setItem('hyperliquid_wallet', walletAddress);
-        localStorage.setItem('hyperliquid_chain', 'arbitrum');
-        localStorage.setItem('hyperliquid_provider', providerName);
-        log("Dados salvos!", 'success');
-        setCheck('c4', 'done');
-
-        setCheck('c5', 'pending');
-        log("Atualizando interface...", 'info');
-        setStatus(`Carteira conectada: ${walletAddress.substr(0,6)}...${walletAddress.substr(-4)} | Provider: ${providerName}`, false);
-        document.querySelector('.connect-btn').textContent = '✅ Conectado';
-        document.querySelector('.connect-btn').style.background = '#2d2d4a';
-        document.querySelector('.connect-btn').style.color = '#00ff88';
-        log("Interface atualizada!", 'success');
-        setCheck('c5', 'done');
-
-        alert(`Sucesso!\nEndereço: ${walletAddress}\nRede: Arbitrum One\nProvider: ${providerName}`);
-
-    } catch (error) {
-        console.error(error);
-        let msg = error.message || "Erro desconhecido";
-        log(`ERRO: ${msg}`, 'error');
-        setStatus(msg, true);
-
-        if (msg.includes("must has at least one account")) {
-            setCheck('c2', 'error');
-            
-            const instructionBox = document.createElement('div');
-            instructionBox.style.cssText = 'background:#220000; color:#ff6666; padding:15px; border-radius:8px; margin:15px 0; font-size:14px; line-height:1.5; max-width: 600px; text-align: left;';
-            instructionBox.innerHTML = `
-                <strong>🚨 ERRO CRÍTICO:</strong> A carteira diz que não tem contas.<br><br>
-                <strong>✅ SOLUÇÃO PASSO A PASSO:</strong><br>
-                1. Abra a EXTENSÃO da ${providerName}<br>
-                2. Clique em <strong>"Create Wallet"</strong> ou <strong>"+"</strong> para adicionar conta<br>
-                3. Siga os passos (defina senha, anote seed phrase)<br>
-                4. <strong>RECARGUE ESTA PÁGINA</strong> (pressione F5)<br>
-                5. Tente conectar novamente<br><br>
-                <em>Dica: Após criar a conta, volte aqui e clique em "Conectar Carteira" novamente.</em>
-            `;
-            document.querySelector('.main').appendChild(instructionBox);
-            
-            log("Instruções exibidas na interface", 'info');
-        } else if (msg.includes("Timeout")) {
-            setCheck('c2', 'error');
-            alert("⏱️ Tempo esgotado! A carteira não respondeu.\n\nTente:\n1. Recarregar a página\n2. Verificar se a extensão da carteira está ativa\n3. Tentar conectar novamente");
-        } else {
-            setCheck('c3', 'error');
-            alert(`Erro ao conectar: ${msg}\n\nVerifique a barra lateral direita para detalhes.`);
-        }
-    }
-}
-
-function simulateConnection() {
-    const fakeAddress = "0x1234567890abcdef1234567890abcdef12345678";
-    const fakeProvider = "Simulado (Dev Mode)";
-    
-    setStatus(`Carteira simulada: ${fakeAddress.substr(0,6)}...${fakeAddress.substr(-4)} | Provider: ${fakeProvider}`, false);
-    document.querySelector('.connect-btn').textContent = '✅ Conectado (Simulado)';
-    document.querySelector('.connect-btn').style.background = '#2d2d4a';
-    document.querySelector('.connect-btn').style.color = '#00ff88';
-    
-    setCheck('c1', 'done');
-    setCheck('c2', 'done');
-    setCheck('c3', 'done');
-    setCheck('c4', 'done');
-    setCheck('c5', 'done');
-    
-    localStorage.setItem('hyperliquid_wallet', fakeAddress);
-    localStorage.setItem('hyperliquid_chain', 'arbitrum');
-    localStorage.setItem('hyperliquid_provider', fakeProvider);
-    
-    log("Conexão simulada com sucesso!", 'success');
-    alert("Modo Desenvolvedor ativado! Você pode prosseguir para o Trader.");
-}
-
-window.onload = function() {
-    try {
-        log("Página carregada com sucesso!", 'success');
-        const saved = localStorage.getItem('hyperliquid_wallet');
-        if (saved) {
-            const providerSaved = localStorage.getItem('hyperliquid_provider') || 'desconhecido';
-            setStatus(`Carteira salva: ${saved.substr(0,6)}...${saved.substr(-4)} | Provider: ${providerSaved}`, false);
-            document.querySelector('.connect-btn').textContent = '✅ Conectado (salvo)';
-            document.querySelector('.connect-btn').style.background = '#2d2d4a';
-            document.querySelector('.connect-btn').style.color = '#00ff88';
-            setCheck('c4', 'done');
-            setCheck('c5', 'done');
-            log("Carteira restaurada do localStorage", 'success');
-        } else {
-            log("Nenhuma carteira salva.", 'info');
-        }
-    } catch(e) {
-        console.error("Erro ao carregar página:", e);
-        log("Erro ao carregar página: " + e.message, 'error');
-    }
-};
-</script>
+<footer>
+  © 2025 BlueStudio. Todos os direitos reservados.
+</footer>
 
 </body>
 </html>
