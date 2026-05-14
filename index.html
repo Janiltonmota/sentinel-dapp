@@ -1,31 +1,267 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multichain Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Hyperliquid Custom - Landing</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f0f1a;
+            color: #e0e0ff;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+        }
+        .main {
+            flex: 1;
+            padding: 40px;
+            text-align: center;
+        }
+        .sidebar {
+            width: 300px;
+            background: #111;
+            border-left: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        h1 { color: #00ff88; }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #00ff88;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        button:hover { background: #00cc6a; }
+        .status { margin: 20px 0; font-size: 14px; }
+        .error { color: #ff3366; }
+        .success { color: #00ff88; }
+        .log { 
+            font-family: monospace; 
+            font-size: 12px; 
+            background: #1a1a1a; 
+            padding: 5px; 
+            margin: 5px 0; 
+            border-radius: 3px; 
+            word-break: break-all;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .pending { background: #555; color: white; }
+        .done { background: #00ff88; color: black; }
+        .error-icon { background: #ff3366; color: white; }
+    </style>
 </head>
 <body>
-    <nav>
-        <h1>MultiChain Explorer</h1>
-        <div id="wallet-actions">
-            <button id="connectBtn">Conectar Carteira</button>
-            <div id="walletInfo" class="hidden">
-                <span id="walletAddress"></span>
-                <button id="disconnectBtn">Desconectar</button>
-            </div>
-        </div>
-    </nav>
 
-    <main>
-        <section id="hero">
-            <h2>Gerencie seus ativos em diversas redes</h2>
-            <p>Conecte sua carteira para visualizar seu saldo multichain.</p>
-        </section>
-    </main>
+<div class="main">
+    <h1>HYPERLIQUID CUSTOM</h1>
+    <p>Seu terminal de trading personalizado. Conecte sua carteira na Arbitrum.</p>
+    
+    <button id="connectBtn" onclick="connectWallet()">🦊 Conectar Carteira</button>
+    
+    <div class="status" id="status">Aguardando conexão...</div>
+    <div class="error" id="error"></div>
+</div>
 
-    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
-    <script src="script.js"></script>
+<div class="sidebar">
+    <h3>📋 Checklist</h3>
+    <div class="checklist-item"><div class="icon pending" id="c1">?</div> Provedor Web3</div>
+    <div class="checklist-item"><div class="icon pending" id="c2">?</div> Contas</div>
+    <div class="checklist-item"><div class="icon pending" id="c3">?</div> Rede Arbitrum</div>
+    <div class="checklist-item"><div class="icon pending" id="c4">?</div> Salvar dados</div>
+    <div class="checklist-item"><div class="icon pending" id="c5">?</div> Interface</div>
+
+    <h3>🪵 Logs</h3>
+    <div id="logs"></div>
+</div>
+
+<script>
+// Funções auxiliares seguras
+function log(msg, type = 'info') {
+    try {
+        const logs = document.getElementById('logs');
+        if (!logs) return;
+        const div = document.createElement('div');
+        div.className = 'log';
+        if (type === 'error') div.style.color = '#ff3366';
+        if (type === 'success') div.style.color = '#00ff88';
+        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logs.appendChild(div);
+        logs.scrollTop = logs.scrollHeight;
+        console.log(`[${type}] ${msg}`);
+    } catch(e) {
+        console.error("Erro ao escrever log:", e);
+    }
+}
+
+function setCheck(id, status) {
+    try {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = 'icon ' + status;
+        el.textContent = status === 'done' ? '✓' : status === 'error' ? '✗' : '?';
+    } catch(e) {
+        console.error("Erro ao atualizar checklist:", e);
+    }
+}
+
+function setStatus(msg, isError = false) {
+    try {
+        const statusEl = document.getElementById('status');
+        const errorEl = document.getElementById('error');
+        if (statusEl) statusEl.textContent = msg;
+        if (errorEl) {
+            if (isError) {
+                errorEl.textContent = msg;
+                errorEl.style.display = 'block';
+            } else {
+                errorEl.textContent = '';
+                errorEl.style.display = 'none';
+            }
+        }
+    } catch(e) {
+        console.error("Erro ao atualizar status:", e);
+    }
+}
+
+async function connectWallet() {
+    try {
+        log("Iniciando conexão...");
+        setCheck('c1', 'pending');
+
+        // Detectar provider
+        let provider = null;
+        if (typeof window.okxwallet !== 'undefined' && window.okxwallet.isOkx) {
+            provider = window.okxwallet;
+            log("✅ OKX Wallet nativa detectada", 'success');
+            setCheck('c1', 'done');
+        } else if (typeof window.ethereum !== 'undefined') {
+            provider = window.ethereum;
+            log("⚠️ Provider genérico (ethereum)", 'warning');
+            setCheck('c1', 'done');
+        } else {
+            throw new Error("Nenhuma carteira Web3 encontrada!");
+        }
+
+        setCheck('c2', 'pending');
+        log("Solicitando contas...");
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        
+        if (!accounts || accounts.length === 0) {
+            throw new Error("Nenhuma conta retornada pela carteira.");
+        }
+
+        const address = accounts[0];
+        log(`Conta recebida: ${address}`, 'success');
+        setCheck('c2', 'done');
+
+        setCheck('c3', 'pending');
+        log("Verificando rede...");
+        const chainId = await provider.request({ method: 'eth_chainId' });
+        log(`Chain ID atual: ${chainId}`);
+
+        const ARBITRUM_CHAIN_ID = '0xa4b1';
+        if (chainId !== ARBITRUM_CHAIN_ID) {
+            log("Trocando para Arbitrum...");
+            try {
+                await provider.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: ARBITRUM_CHAIN_ID }]
+                });
+                log("Rede trocada com sucesso!", 'success');
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    log("Adicionando rede Arbitrum...");
+                    await provider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: ARBITRUM_CHAIN_ID,
+                            chainName: 'Arbitrum One',
+                            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                            rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+                            blockExplorerUrls: ['https://arbiscan.io']
+                        }]
+                    });
+                    log("Rede adicionada com sucesso!", 'success');
+                } else {
+                    throw switchError;
+                }
+            }
+        }
+        setCheck('c3', 'done');
+
+        setCheck('c4', 'pending');
+        log("Salvando dados...");
+        localStorage.setItem('hyperliquid_wallet', address);
+        localStorage.setItem('hyperliquid_chain', 'arbitrum');
+        log("Dados salvos!", 'success');
+        setCheck('c4', 'done');
+
+        setCheck('c5', 'pending');
+        log("Atualizando interface...");
+        setStatus(`Carteira conectada: ${address.substr(0,6)}...${address.substr(-4)}`, false);
+        document.getElementById('connectBtn').textContent = '✅ Conectado';
+        document.getElementById('connectBtn').style.background = '#2d2d4a';
+        document.getElementById('connectBtn').style.color = '#00ff88';
+        log("Interface atualizada!", 'success');
+        setCheck('c5', 'done');
+
+        alert("Sucesso! Carteira conectada na Arbitrum One.");
+
+    } catch (error) {
+        console.error(error);
+        let msg = error.message || "Erro desconhecido";
+        log(`ERRO: ${msg}`, 'error');
+        setStatus(msg, true);
+
+        if (msg.includes("must has at least one account")) {
+            setCheck('c2', 'error');
+            alert("🚨 ERRO: A carteira diz que não tem contas.\n\n✅ SOLUÇÃO:\n1. Abra a EXTENSÃO da OKX Wallet\n2. Clique em 'Create Wallet' ou '+'\n3. Crie uma conta (senha + seed phrase)\n4. RECARGUE ESTA PÁGINA (F5)\n5. Tente conectar novamente");
+        } else {
+            setCheck('c3', 'error');
+        }
+    }
+}
+
+// Ao carregar a página
+window.onload = function() {
+    try {
+        log("Página carregada com sucesso!");
+        const saved = localStorage.getItem('hyperliquid_wallet');
+        if (saved) {
+            setStatus(`Carteira salva: ${saved.substr(0,6)}...${saved.substr(-4)}`, false);
+            document.getElementById('connectBtn').textContent = '✅ Conectado (salvo)';
+            document.getElementById('connectBtn').style.background = '#2d2d4a';
+            document.getElementById('connectBtn').style.color = '#00ff88';
+            setCheck('c4', 'done');
+            setCheck('c5', 'done');
+            log("Carteira restaurada do localStorage", 'success');
+        }
+    } catch(e) {
+        console.error("Erro ao carregar página:", e);
+        log("Erro ao carregar página: " + e.message, 'error');
+    }
+};
+</script>
+
 </body>
 </html>
