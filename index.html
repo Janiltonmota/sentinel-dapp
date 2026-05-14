@@ -99,6 +99,46 @@
 
   .nav-links a:hover { color: var(--text-bright); }
 
+  /* CONTAINER DO BOTÃO E ENDEREÇO */
+  .wallet-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .wallet-address {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(74,144,226,0.15);
+    border: 1px solid rgba(74,144,226,0.3);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--blue-light);
+    letter-spacing: 0.02em;
+  }
+
+  .wallet-address.show {
+    display: flex;
+  }
+
+  .wallet-address::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
   /* BOTÃO PRINCIPAL — bordas suaves, preto */
   .btn-primary {
     display: inline-flex;
@@ -164,11 +204,6 @@
     background: var(--blue-light);
     box-shadow: 0 0 8px var(--blue-light);
     animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
   }
 
   h1 {
@@ -350,6 +385,9 @@
   @media (max-width: 640px) {
     nav { padding: 1rem 1.5rem; }
     .nav-links { display: none; }
+    .wallet-container { gap: 0.5rem; }
+    .wallet-address { font-size: 0.7rem; padding: 0.4rem 0.8rem; }
+    .btn-primary { padding: 0.5rem 1rem; font-size: 0.75rem; }
   }
 
   /* MODAL OVERLAY */
@@ -491,6 +529,29 @@
 
   .modal-footer a { color: var(--blue-light); text-decoration: none; }
   .modal-footer a:hover { text-decoration: underline; }
+
+  /* TOAST NOTIFICATION */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(16, 185, 129, 0.95);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .toast.error {
+    background: rgba(239, 68, 68, 0.95);
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -504,10 +565,13 @@
     <li><a href="#">Preços</a></li>
     <li><a href="#">Sobre</a></li>
   </ul>
-  <button class="btn-primary" onclick="document.getElementById('walletModal').classList.add('open')">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/><circle cx="16.5" cy="14.5" r="1.5" fill="currentColor" stroke="none"/></svg>
-    Conectar carteira
-  </button>
+  <div class="wallet-container">
+    <div class="wallet-address" id="walletAddress"></div>
+    <button class="btn-primary" id="walletButton" onclick="toggleWalletConnection()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/><circle cx="16.5" cy="14.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+      <span id="walletButtonText">Conectar carteira</span>
+    </button>
+  </div>
 </nav>
 
 <!-- MODAL CARTEIRAS -->
@@ -522,7 +586,7 @@
     <div class="wallet-grid">
 
       <!-- MetaMask - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#f5841f1a;">
           <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width="28" height="28" alt="MetaMask" onerror="this.style.display='none';this.parentElement.textContent='🦊'">
         </div>
@@ -533,7 +597,7 @@
       </a>
 
       <!-- WalletConnect - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#3b99fc1a;">
           <img src="https://altcoinsbox.com/wp-content/uploads/2023/01/wallet-connect-logo.png" width="28" height="28" alt="WalletConnect" onerror="this.style.display='none';this.parentElement.textContent='🔗'">
         </div>
@@ -543,7 +607,7 @@
         </div>
       </a>
 
-      <!-- OKX WALLET - ATIVA (abre popup da extensão) -->
+      <!-- OKX WALLET - ATIVA -->
       <a class="wallet-item" href="#" onclick="connectOKXWallet(event);">
         <div class="wallet-logo" style="background:#0a0a0a; border-radius:10px; overflow:hidden;">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -562,7 +626,7 @@
       </a>
 
       <!-- Phantom - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#9945ff1a; font-size:1.4rem;">🌐</div>
         <div>
           <div class="wallet-name">Phantom</div>
@@ -571,7 +635,7 @@
       </a>
 
       <!-- Brave Wallet - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#e8831a1a; font-size:1.4rem;">🦁</div>
         <div>
           <div class="wallet-name">Brave Wallet</div>
@@ -580,7 +644,7 @@
       </a>
 
       <!-- Trust Wallet - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#1199fa1a; font-size:1.4rem;">💎</div>
         <div>
           <div class="wallet-name">Trust Wallet</div>
@@ -589,7 +653,7 @@
       </a>
 
       <!-- Exodus - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#ff00801a; font-size:1.4rem;">🔺</div>
         <div>
           <div class="wallet-name">Exodus</div>
@@ -598,7 +662,7 @@
       </a>
 
       <!-- Ledger - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#ffd7001a; font-size:1.4rem;">⚡</div>
         <div>
           <div class="wallet-name">Ledger</div>
@@ -607,7 +671,7 @@
       </a>
 
       <!-- Trezor - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#00d3951a; font-size:1.4rem;">🔐</div>
         <div>
           <div class="wallet-name">Trezor</div>
@@ -616,7 +680,7 @@
       </a>
 
       <!-- Rainbow - DESATIVADA -->
-      <a class="wallet-item disabled" href="#" onclick="return false;" style="opacity:0.3;filter:grayscale(1);cursor:not-allowed;">
+      <a class="wallet-item disabled" href="#" onclick="return false;">
         <div class="wallet-logo" style="background:#6c47ff1a; font-size:1.4rem;">🌀</div>
         <div>
           <div class="wallet-name">Rainbow</div>
@@ -694,14 +758,75 @@
 </section>
 
 <footer>
-  © 2025 Janilton Mota. Todos os direitos reservados.
+  © 2025 BlueStudio. Todos os direitos reservados.
 </footer>
 
 <script>
-  // Função para conectar à OKX Wallet
+  let currentAccount = null;
+
+  // Função para mostrar toast
+  function showToast(message, isError = false) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${isError ? 'error' : ''}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
+
+  // Função para formatar endereço
+  function formatAddress(address) {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  }
+
+  // Atualizar UI da carteira
+  function updateWalletUI() {
+    const walletButtonText = document.getElementById('walletButtonText');
+    const walletAddressDiv = document.getElementById('walletAddress');
+    
+    if (currentAccount) {
+      walletButtonText.textContent = 'Desconectar';
+      walletAddressDiv.textContent = formatAddress(currentAccount);
+      walletAddressDiv.classList.add('show');
+    } else {
+      walletButtonText.textContent = 'Conectar carteira';
+      walletAddressDiv.textContent = '';
+      walletAddressDiv.classList.remove('show');
+    }
+  }
+
+  // Desconectar carteira
+  async function disconnectWallet() {
+    if (!currentAccount) return;
+    
+    try {
+      // Tenta desconectar se a extensão suportar
+      if (typeof window.okxwallet !== 'undefined') {
+        // Algumas extensões suportam revogar permissões
+        try {
+          await window.okxwallet.request({ method: 'wallet_revokePermissions' });
+        } catch(e) {
+          // Ignora se não suportar
+        }
+      }
+      
+      currentAccount = null;
+      updateWalletUI();
+      showToast('Carteira desconectada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao desconectar:', error);
+      showToast('Erro ao desconectar carteira.', true);
+    }
+  }
+
+  // Conectar à OKX Wallet
   async function connectOKXWallet(event) {
-    event.preventDefault();
-    event.stopPropagation();
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
 
     // Fecha o modal
     document.getElementById('walletModal').classList.remove('open');
@@ -713,18 +838,24 @@
         const accounts = await window.okxwallet.request({ method: 'eth_requestAccounts' });
         
         if (accounts && accounts.length > 0) {
-          console.log('Conectado com sucesso à OKX Wallet:', accounts[0]);
-          alert('Conectado à OKX Wallet com sucesso!\nEndereço: ' + accounts[0].substring(0, 10) + '...');
-          // Aqui você pode adicionar lógica adicional pós-conexão
+          currentAccount = accounts[0];
+          updateWalletUI();
+          showToast(`Conectado à OKX Wallet!\nEndereço: ${formatAddress(currentAccount)}`);
+          
+          // Opcional: Obter a rede atual
+          try {
+            const chainId = await window.okxwallet.request({ method: 'eth_chainId' });
+            console.log('Chain ID:', chainId);
+          } catch(e) {}
         } else {
-          alert('Nenhuma conta encontrada na OKX Wallet.');
+          showToast('Nenhuma conta encontrada na OKX Wallet.', true);
         }
       } catch (error) {
         console.error('Erro ao conectar à OKX Wallet:', error);
         if (error.code === 4001) {
-          alert('Conexão recusada pelo usuário.');
+          showToast('Conexão recusada pelo usuário.', true);
         } else {
-          alert('Erro ao conectar à OKX Wallet. Tente novamente.');
+          showToast('Erro ao conectar à OKX Wallet. Tente novamente.', true);
         }
       }
     } else {
@@ -735,6 +866,55 @@
       }
     }
   }
+
+  // Alternar entre conectar/desconectar
+  async function toggleWalletConnection() {
+    if (currentAccount) {
+      await disconnectWallet();
+    } else {
+      // Se não estiver conectado, abre o modal
+      document.getElementById('walletModal').classList.add('open');
+    }
+  }
+
+  // Verificar se já está conectado ao carregar a página
+  async function checkExistingConnection() {
+    if (typeof window.okxwallet !== 'undefined') {
+      try {
+        const accounts = await window.okxwallet.request({ method: 'eth_accounts' });
+        if (accounts && accounts.length > 0) {
+          currentAccount = accounts[0];
+          updateWalletUI();
+          console.log('Reconectado à carteira:', currentAccount);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar conexão existente:', error);
+      }
+    }
+  }
+
+  // Listener para mudanças de conta
+  if (typeof window.okxwallet !== 'undefined') {
+    window.okxwallet.on('accountsChanged', function(accounts) {
+      if (accounts && accounts.length > 0) {
+        currentAccount = accounts[0];
+        updateWalletUI();
+        showToast(`Conta alterada: ${formatAddress(currentAccount)}`);
+      } else {
+        currentAccount = null;
+        updateWalletUI();
+        showToast('Carteira desconectada.');
+      }
+    });
+
+    window.okxwallet.on('chainChanged', function(chainId) {
+      console.log('Rede alterada:', chainId);
+      showToast(`Rede alterada para: ${chainId}`);
+    });
+  }
+
+  // Verificar conexão ao carregar
+  checkExistingConnection();
 </script>
 
 </body>
