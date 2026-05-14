@@ -1,101 +1,11 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Hyperliquid Custom - Landing</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #0f0f1a;
-            color: #e0e0ff;
-            font-family: Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-        }
-        .main {
-            flex: 1;
-            padding: 40px;
-            text-align: center;
-        }
-        .sidebar {
-            width: 300px;
-            background: #111;
-            border-left: 1px solid #333;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        h1 { color: #00ff88; }
-        button {
-            padding: 15px 30px;
-            font-size: 16px;
-            background: #00ff88;
-            color: black;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 20px 0;
-        }
-        button:hover { background: #00cc6a; }
-        .status { margin: 20px 0; font-size: 14px; }
-        .error { color: #ff3366; }
-        .success { color: #00ff88; }
-        .log { 
-            font-family: monospace; 
-            font-size: 12px; 
-            background: #1a1a1a; 
-            padding: 5px; 
-            margin: 5px 0; 
-            border-radius: 3px; 
-            word-break: break-all;
-        }
-        .checklist-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        .icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .pending { background: #555; color: white; }
-        .done { background: #00ff88; color: black; }
-        .error-icon { background: #ff3366; color: white; }
-    </style>
-</head>
-<body>
-
-<div class="main">
-    <h1>HYPERLIQUID CUSTOM</h1>
-    <p>Seu terminal de trading personalizado. Conecte sua carteira na Arbitrum.</p>
-    
-    <button id="connectBtn" onclick="connectWallet()">🦊 Conectar Carteira</button>
-    
-    <div class="status" id="status">Aguardando conexão...</div>
-    <div class="error" id="error"></div>
-</div>
-
-<div class="sidebar">
-    <h3>📋 Checklist</h3>
-    <div class="checklist-item"><div class="icon pending" id="c1">?</div> Provedor Web3</div>
-    <div class="checklist-item"><div class="icon pending" id="c2">?</div> Contas</div>
-    <div class="checklist-item"><div class="icon pending" id="c3">?</div> Rede Arbitrum</div>
-    <div class="checklist-item"><div class="icon pending" id="c4">?</div> Salvar dados</div>
-    <div class="checklist-item"><div class="icon pending" id="c5">?</div> Interface</div>
-
-    <h3>🪵 Logs</h3>
-    <div id="logs"></div>
-</div>
-
 <script>
-// Funções auxiliares seguras
+let walletAddress = '';
+let isConnected = false;
+
+const ARBITRUM_CHAIN_ID = '0xa4b1';
+const ARBITRUM_RPC = 'https://arb1.arbitrum.io/rpc';
+const ARBITRUM_EXPLORER = 'https://arbiscan.io';
+
 function log(msg, type = 'info') {
     try {
         const logs = document.getElementById('logs');
@@ -104,6 +14,7 @@ function log(msg, type = 'info') {
         div.className = 'log';
         if (type === 'error') div.style.color = '#ff3366';
         if (type === 'success') div.style.color = '#00ff88';
+        if (type === 'warning') div.style.color = '#ffcc00';
         div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
         logs.appendChild(div);
         logs.scrollTop = logs.scrollHeight;
@@ -145,43 +56,64 @@ function setStatus(msg, isError = false) {
 
 async function connectWallet() {
     try {
-        log("Iniciando conexão...");
+        log("Iniciando conexão...", 'info');
         setCheck('c1', 'pending');
 
-        // Detectar provider
+        // ➤ DETECÇÃO ROBUSTA DE PROVIDERS
         let provider = null;
-        if (typeof window.okxwallet !== 'undefined' && window.okxwallet.isOkx) {
-            provider = window.okxwallet;
-            log("✅ OKX Wallet nativa detectada", 'success');
-            setCheck('c1', 'done');
-        } else if (typeof window.ethereum !== 'undefined') {
+        let providerName = 'Desconhecido';
+
+        // Prioridade máxima: OKX Wallet nativa
+        if (typeof window.okxwallet !== 'undefined') {
+            if (window.okxwallet.isOkx) {
+                provider = window.okxwallet;
+                providerName = 'OKX Wallet Nativa';
+                log("✅ OKX Wallet nativa detectada", 'success');
+                setCheck('c1', 'done');
+            } else {
+                log("⚠️ window.okxwallet existe mas não é OKX", 'warning');
+            }
+        }
+
+        // Fallback: ethereum (pode ser MetaMask, Rabby, ou OKX em modo compat)
+        if (!provider && typeof window.ethereum !== 'undefined') {
             provider = window.ethereum;
-            log("⚠️ Provider genérico (ethereum)", 'warning');
+            providerName = 'Provider Ethereum (MetaMask/Rabby/OKX Compat)';
+            log("⚠️ Usando provider ethereum genérico", 'warning');
             setCheck('c1', 'done');
-        } else {
-            throw new Error("Nenhuma carteira Web3 encontrada!");
+        }
+
+        // Último recurso: nenhum provider
+        if (!provider) {
+            throw new Error("Nenhuma carteira Web3 encontrada! Instale a OKX Wallet ou MetaMask.");
         }
 
         setCheck('c2', 'pending');
-        log("Solicitando contas...");
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
-        
+        log("Solicitando contas...", 'info');
+
+        // TENTA CONECTAR COM TIMEOUT
+        const accounts = await Promise.race([
+            provider.request({ method: 'eth_requestAccounts' }),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Timeout: Carteira não respondeu")), 10000)
+            )
+        ]);
+
         if (!accounts || accounts.length === 0) {
-            throw new Error("Nenhuma conta retornada pela carteira.");
+            throw new Error("Nenhuma conta retornada pela carteira. Certifique-se de ter criado uma conta dentro da extensão.");
         }
 
-        const address = accounts[0];
-        log(`Conta recebida: ${address}`, 'success');
+        walletAddress = accounts[0];
+        log(`Conta recebida: ${walletAddress}`, 'success');
         setCheck('c2', 'done');
 
         setCheck('c3', 'pending');
-        log("Verificando rede...");
+        log("Verificando rede...", 'info');
         const chainId = await provider.request({ method: 'eth_chainId' });
-        log(`Chain ID atual: ${chainId}`);
+        log(`Chain ID atual: ${chainId}`, 'info');
 
-        const ARBITRUM_CHAIN_ID = '0xa4b1';
         if (chainId !== ARBITRUM_CHAIN_ID) {
-            log("Trocando para Arbitrum...");
+            log("Trocando para Arbitrum...", 'info');
             try {
                 await provider.request({
                     method: 'wallet_switchEthereumChain',
@@ -190,15 +122,15 @@ async function connectWallet() {
                 log("Rede trocada com sucesso!", 'success');
             } catch (switchError) {
                 if (switchError.code === 4902) {
-                    log("Adicionando rede Arbitrum...");
+                    log("Adicionando rede Arbitrum...", 'info');
                     await provider.request({
                         method: 'wallet_addEthereumChain',
                         params: [{
                             chainId: ARBITRUM_CHAIN_ID,
                             chainName: 'Arbitrum One',
                             nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                            rpcUrls: ['https://arb1.arbitrum.io/rpc'],
-                            blockExplorerUrls: ['https://arbiscan.io']
+                            rpcUrls: [ARBITRUM_RPC],
+                            blockExplorerUrls: [ARBITRUM_EXPLORER]
                         }]
                     });
                     log("Rede adicionada com sucesso!", 'success');
@@ -210,22 +142,23 @@ async function connectWallet() {
         setCheck('c3', 'done');
 
         setCheck('c4', 'pending');
-        log("Salvando dados...");
-        localStorage.setItem('hyperliquid_wallet', address);
+        log("Salvando dados...", 'info');
+        localStorage.setItem('hyperliquid_wallet', walletAddress);
         localStorage.setItem('hyperliquid_chain', 'arbitrum');
+        localStorage.setItem('hyperliquid_provider', providerName);
         log("Dados salvos!", 'success');
         setCheck('c4', 'done');
 
         setCheck('c5', 'pending');
-        log("Atualizando interface...");
-        setStatus(`Carteira conectada: ${address.substr(0,6)}...${address.substr(-4)}`, false);
+        log("Atualizando interface...", 'info');
+        setStatus(`Carteira conectada: ${walletAddress.substr(0,6)}...${walletAddress.substr(-4)} | Provider: ${providerName}`, false);
         document.getElementById('connectBtn').textContent = '✅ Conectado';
         document.getElementById('connectBtn').style.background = '#2d2d4a';
         document.getElementById('connectBtn').style.color = '#00ff88';
         log("Interface atualizada!", 'success');
         setCheck('c5', 'done');
 
-        alert("Sucesso! Carteira conectada na Arbitrum One.");
+        alert(`Sucesso!\nEndereço: ${walletAddress}\nRede: Arbitrum One\nProvider: ${providerName}`);
 
     } catch (error) {
         console.error(error);
@@ -235,9 +168,31 @@ async function connectWallet() {
 
         if (msg.includes("must has at least one account")) {
             setCheck('c2', 'error');
-            alert("🚨 ERRO: A carteira diz que não tem contas.\n\n✅ SOLUÇÃO:\n1. Abra a EXTENSÃO da OKX Wallet\n2. Clique em 'Create Wallet' ou '+'\n3. Crie uma conta (senha + seed phrase)\n4. RECARGUE ESTA PÁGINA (F5)\n5. Tente conectar novamente");
+            
+            // MOSTRAR INSTRUÇÕES DETALHADAS NA INTERFACE
+            const instructionBox = document.createElement('div');
+            instructionBox.style.cssText = 'background:#220000; color:#ff6666; padding:15px; border-radius:8px; margin:15px 0; font-size:14px; line-height:1.5; max-width: 600px; text-align: left;';
+            instructionBox.innerHTML = `
+                <strong>🚨 ERRO CRÍTICO:</strong> A carteira diz que não tem contas.<br><br>
+                <strong>✅ SOLUÇÃO PASSO A PASSO:</strong><br>
+                1. Abra a EXTENSÃO da OKX Wallet (clique no ícone 🦊 no canto superior direito do navegador)<br>
+                2. Clique em <strong>"Create Wallet"</strong> ou <strong>"+"</strong> para adicionar conta<br>
+                3. Siga os passos (defina senha, anote seed phrase)<br>
+                4. <strong>RECARGUE ESTA PÁGINA</strong> (pressione F5)<br>
+                5. Tente conectar novamente<br><br>
+                <em>Dica: Após criar a conta, volte aqui e clique em "Conectar Carteira" novamente.</em><br><br>
+                <strong>ℹ️ Nota técnica:</strong> Você está usando o provider: <code>${providerName}</code>. 
+                Se possível, tente usar a OKX Wallet nativa diretamente.
+            `;
+            document.querySelector('.main').appendChild(instructionBox);
+            
+            log("Instruções exibidas na interface", 'info');
+        } else if (msg.includes("Timeout")) {
+            setCheck('c2', 'error');
+            alert("⏱️ Tempo esgotado! A carteira não respondeu.\n\nTente:\n1. Recarregar a página\n2. Verificar se a extensão da carteira está ativa\n3. Tentar conectar novamente");
         } else {
             setCheck('c3', 'error');
+            alert(`Erro ao conectar: ${msg}\n\nVerifique a barra lateral direita para detalhes.`);
         }
     }
 }
@@ -245,16 +200,19 @@ async function connectWallet() {
 // Ao carregar a página
 window.onload = function() {
     try {
-        log("Página carregada com sucesso!");
+        log("Página carregada com sucesso!", 'success');
         const saved = localStorage.getItem('hyperliquid_wallet');
         if (saved) {
-            setStatus(`Carteira salva: ${saved.substr(0,6)}...${saved.substr(-4)}`, false);
+            const providerSaved = localStorage.getItem('hyperliquid_provider') || 'desconhecido';
+            setStatus(`Carteira salva: ${saved.substr(0,6)}...${saved.substr(-4)} | Provider: ${providerSaved}`, false);
             document.getElementById('connectBtn').textContent = '✅ Conectado (salvo)';
             document.getElementById('connectBtn').style.background = '#2d2d4a';
             document.getElementById('connectBtn').style.color = '#00ff88';
             setCheck('c4', 'done');
             setCheck('c5', 'done');
             log("Carteira restaurada do localStorage", 'success');
+        } else {
+            log("Nenhuma carteira salva.", 'info');
         }
     } catch(e) {
         console.error("Erro ao carregar página:", e);
@@ -262,6 +220,3 @@ window.onload = function() {
     }
 };
 </script>
-
-</body>
-</html>
