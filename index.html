@@ -38,6 +38,7 @@
       radial-gradient(ellipse 50% 40% at 80% 80%, #0d1f5e 0%, transparent 60%),
       linear-gradient(175deg, #040c1f 0%, #000000 55%, #010510 100%);
     z-index: 0;
+    pointer-events: none;
   }
 
   /* Partículas decorativas */
@@ -53,6 +54,7 @@
       radial-gradient(1px 1px at 90% 25%, rgba(100,160,240,0.3) 0%, transparent 100%),
       radial-gradient(1px 1px at 10% 80%, rgba(74,144,226,0.2) 0%, transparent 100%);
     z-index: 0;
+    pointer-events: none;
   }
 
   /* NAV */
@@ -763,6 +765,7 @@
 
 <script>
   let currentAccount = null;
+  let walletListenersInitialized = false;
 
   // Função para mostrar toast
   function showToast(message, isError = false) {
@@ -802,16 +805,6 @@
     if (!currentAccount) return;
     
     try {
-      // Tenta desconectar se a extensão suportar
-      if (typeof window.okxwallet !== 'undefined') {
-        // Algumas extensões suportam revogar permissões
-        try {
-          await window.okxwallet.request({ method: 'wallet_revokePermissions' });
-        } catch(e) {
-          // Ignora se não suportar
-        }
-      }
-      
       currentAccount = null;
       updateWalletUI();
       showToast('Carteira desconectada com sucesso!');
@@ -829,7 +822,8 @@
     }
 
     // Fecha o modal
-    document.getElementById('walletModal').classList.remove('open');
+    const modal = document.getElementById('walletModal');
+    modal.classList.remove('open');
 
     // Verifica se a extensão da OKX Wallet está instalada
     if (typeof window.okxwallet !== 'undefined') {
@@ -842,11 +836,11 @@
           updateWalletUI();
           showToast(`Conectado à OKX Wallet!\nEndereço: ${formatAddress(currentAccount)}`);
           
-          // Opcional: Obter a rede atual
-          try {
-            const chainId = await window.okxwallet.request({ method: 'eth_chainId' });
-            console.log('Chain ID:', chainId);
-          } catch(e) {}
+          // Inicializa listeners apenas uma vez após primeira conexão
+          if (!walletListenersInitialized) {
+            initWalletListeners();
+            walletListenersInitialized = true;
+          }
         } else {
           showToast('Nenhuma conta encontrada na OKX Wallet.', true);
         }
@@ -867,6 +861,28 @@
     }
   }
 
+  // Inicializar listeners da wallet (apenas após primeira conexão)
+  function initWalletListeners() {
+    if (typeof window.okxwallet !== 'undefined') {
+      window.okxwallet.on('accountsChanged', function(accounts) {
+        if (accounts && accounts.length > 0) {
+          currentAccount = accounts[0];
+          updateWalletUI();
+          showToast(`Conta alterada: ${formatAddress(currentAccount)}`);
+        } else {
+          currentAccount = null;
+          updateWalletUI();
+          showToast('Carteira desconectada.');
+        }
+      });
+
+      window.okxwallet.on('chainChanged', function(chainId) {
+        console.log('Rede alterada:', chainId);
+        showToast(`Rede alterada para: ${chainId}`);
+      });
+    }
+  }
+
   // Alternar entre conectar/desconectar
   async function toggleWalletConnection() {
     if (currentAccount) {
@@ -877,44 +893,15 @@
     }
   }
 
-  // Verificar se já está conectado ao carregar a página
-  async function checkExistingConnection() {
-    if (typeof window.okxwallet !== 'undefined') {
-      try {
-        const accounts = await window.okxwallet.request({ method: 'eth_accounts' });
-        if (accounts && accounts.length > 0) {
-          currentAccount = accounts[0];
-          updateWalletUI();
-          console.log('Reconectado à carteira:', currentAccount);
-        }
-      } catch (error) {
-        console.error('Erro ao verificar conexão existente:', error);
-      }
-    }
-  }
-
-  // Listener para mudanças de conta
-  if (typeof window.okxwallet !== 'undefined') {
-    window.okxwallet.on('accountsChanged', function(accounts) {
-      if (accounts && accounts.length > 0) {
-        currentAccount = accounts[0];
-        updateWalletUI();
-        showToast(`Conta alterada: ${formatAddress(currentAccount)}`);
-      } else {
-        currentAccount = null;
-        updateWalletUI();
-        showToast('Carteira desconectada.');
-      }
-    });
-
-    window.okxwallet.on('chainChanged', function(chainId) {
-      console.log('Rede alterada:', chainId);
-      showToast(`Rede alterada para: ${chainId}`);
-    });
-  }
-
-  // Verificar conexão ao carregar
-  checkExistingConnection();
+  // NÃO verificar conexão automaticamente ao carregar a página
+  // A conexão só será feita quando o usuário clicar no botão e aceitar
+  
+  // Garantir que nenhum listener automático seja adicionado no carregamento
+  window.addEventListener('load', function() {
+    // Garantir que a UI esteja no estado desconectado
+    currentAccount = null;
+    updateWalletUI();
+  });
 </script>
 
 </body>
