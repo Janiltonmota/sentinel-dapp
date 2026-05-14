@@ -1,187 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Hyperliquid Custom - Landing</title>
-    <style>
-        /* Reset total */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Evita scroll desnecessário */
-        }
-
-        body {
-            background: #0f0f1a;
-            color: #e0e0ff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-        }
-
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            position: relative;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 300px;
-            background: #111;
-            border-left: 1px solid #333;
-            padding: 20px;
-            overflow-y: auto;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        h1 { 
-            color: #00ff88; 
-            font-size: 48px;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-            margin-bottom: 10px;
-        }
-
-        p { 
-            font-size: 18px; 
-            color: #ccc; 
-            margin-bottom: 30px;
-        }
-
-        button {
-            padding: 15px 30px;
-            font-size: 16px;
-            background: #00ff88;
-            color: black;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px 0;
-            transition: all 0.3s;
-            min-width: 250px;
-        }
-
-        button:hover { 
-            background: #00cc6a; 
-            transform: scale(1.05);
-        }
-
-        .status { 
-            margin: 20px 0; 
-            font-size: 14px; 
-            min-height: 20px;
-        }
-
-        .error { 
-            color: #ff3366; 
-            margin-top: 10px;
-            min-height: 20px;
-        }
-
-        .success { color: #00ff88; }
-
-        .log { 
-            font-family: monospace; 
-            font-size: 12px; 
-            background: #1a1a1a; 
-            padding: 5px; 
-            margin: 5px 0; 
-            border-radius: 3px; 
-            word-break: break-all;
-        }
-
-        .checklist-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        .pending { background: #555; color: white; }
-        .done { background: #00ff88; color: black; }
-        .error-icon { background: #ff3366; color: white; }
-
-        /* Botão de simulação */
-        .dev-btn {
-            background: #555 !important;
-            color: white !important;
-        }
-
-        .dev-btn:hover {
-            background: #777 !important;
-        }
-
-        /* Responsividade básica */
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                height: auto;
-                max-height: 40vh;
-                border-left: none;
-                border-top: 1px solid #333;
-            }
-            .main {
-                padding: 10px;
-            }
-            h1 {
-                font-size: 32px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="main">
-    <h1>HYPERLIQUID CUSTOM</h1>
-    <p>Seu terminal de trading personalizado. Conecte sua carteira na Arbitrum.</p>
-    
-    <button id="connectBtn" onclick="connectWallet()">🦊 Conectar Carteira</button>
-    
-    <!-- Botão de Simulação para Desenvolvimento -->
-    <button class="dev-btn" onclick="simulateConnection()">🛠️ Simular Conexão (Dev Mode)</button>
-    
-    <div class="status" id="status">Aguardando conexão...</div>
-    <div class="error" id="error"></div>
-</div>
-
-<div class="sidebar">
-    <h3>📋 Checklist</h3>
-    <div class="checklist-item"><div class="icon pending" id="c1">?</div> Provedor Web3</div>
-    <div class="checklist-item"><div class="icon pending" id="c2">?</div> Contas</div>
-    <div class="checklist-item"><div class="icon pending" id="c3">?</div> Rede Arbitrum</div>
-    <div class="checklist-item"><div class="icon pending" id="c4">?</div> Salvar dados</div>
-    <div class="checklist-item"><div class="icon pending" id="c5">?</div> Interface</div>
-
-    <h3>🪵 Logs</h3>
-    <div id="logs" style="flex: 1; overflow-y: auto;"></div>
-</div>
-
 <script>
 let walletAddress = '';
 let isConnected = false;
@@ -238,6 +54,46 @@ function setStatus(msg, isError = false) {
     }
 }
 
+// ➤ NOVA FUNÇÃO: FORÇA ABERTURA DA OKX WALLET
+function openOKXWallet() {
+    log("Tentando abrir OKX Wallet...", 'info');
+    
+    // Tenta usar window.okxwallet primeiro
+    if (typeof window.okxwallet !== 'undefined') {
+        window.okxwallet.request({ method: 'eth_requestAccounts' })
+            .then(accounts => {
+                if (accounts && accounts.length > 0) {
+                    log("Conta recebida via okxwallet!", 'success');
+                    handleSuccess(accounts[0], 'OKX Wallet (forçado)');
+                } else {
+                    throw new Error("Nenhuma conta retornada");
+                }
+            })
+            .catch(err => {
+                log("Erro ao conectar via okxwallet: " + err.message, 'error');
+                alert("Não foi possível conectar via OKX Wallet.\n\nVerifique:\n1. A extensão está instalada?\n2. Você criou uma conta dentro dela?\n3. Tente recarregar a página.");
+            });
+    } 
+    // Fallback para ethereum
+    else if (typeof window.ethereum !== 'undefined') {
+        window.ethereum.request({ method: 'eth_requestAccounts' })
+            .then(accounts => {
+                if (accounts && accounts.length > 0) {
+                    log("Conta recebida via ethereum!", 'success');
+                    handleSuccess(accounts[0], 'Provider Ethereum');
+                } else {
+                    throw new Error("Nenhuma conta retornada");
+                }
+            })
+            .catch(err => {
+                log("Erro ao conectar via ethereum: " + err.message, 'error');
+                alert("Não foi possível conectar.\n\nProvavelmente você precisa criar uma conta dentro da extensão da carteira.\n\nAbra a OKX Wallet → Clique em 'Create Wallet' → Crie uma conta → Recarregue esta página.");
+            });
+    } else {
+        alert("Nenhuma carteira Web3 detectada!\n\nInstale a OKX Wallet ou MetaMask.");
+    }
+}
+
 async function connectWallet() {
     try {
         log("Iniciando conexão...", 'info');
@@ -246,18 +102,15 @@ async function connectWallet() {
         let provider = null;
         let providerName = 'Desconhecido';
 
+        // Prioridade máxima: OKX Wallet nativa
         if (typeof window.okxwallet !== 'undefined') {
-            if (window.okxwallet.isOkx) {
-                provider = window.okxwallet;
-                providerName = 'OKX Wallet Nativa';
-                log("✅ OKX Wallet nativa detectada", 'success');
-                setCheck('c1', 'done');
-            } else {
-                log("⚠️ window.okxwallet existe mas não é OKX", 'warning');
-            }
-        }
-
-        if (!provider && typeof window.ethereum !== 'undefined') {
+            provider = window.okxwallet;
+            providerName = 'OKX Wallet Nativa';
+            log("✅ Usando OKX Wallet nativa", 'success');
+            setCheck('c1', 'done');
+        } 
+        // Fallback: ethereum
+        else if (typeof window.ethereum !== 'undefined') {
             provider = window.ethereum;
             providerName = 'Provider Ethereum (MetaMask/Rabby/OKX Compat)';
             log("⚠️ Usando provider ethereum genérico", 'warning');
@@ -375,6 +228,29 @@ async function connectWallet() {
     }
 }
 
+function handleSuccess(address, providerName) {
+    walletAddress = address;
+    isConnected = true;
+    
+    setStatus(`Carteira conectada: ${address.substr(0,6)}...${address.substr(-4)} | Provider: ${providerName}`, false);
+    document.getElementById('connectBtn').textContent = '✅ Conectado';
+    document.getElementById('connectBtn').style.background = '#2d2d4a';
+    document.getElementById('connectBtn').style.color = '#00ff88';
+    
+    setCheck('c1', 'done');
+    setCheck('c2', 'done');
+    setCheck('c3', 'done');
+    setCheck('c4', 'done');
+    setCheck('c5', 'done');
+    
+    localStorage.setItem('hyperliquid_wallet', address);
+    localStorage.setItem('hyperliquid_chain', 'arbitrum');
+    localStorage.setItem('hyperliquid_provider', providerName);
+    
+    log("Conexão bem-sucedida!", 'success');
+    alert(`Sucesso!\nEndereço: ${address}\nRede: Arbitrum One\nProvider: ${providerName}`);
+}
+
 function simulateConnection() {
     const fakeAddress = "0x1234567890abcdef1234567890abcdef12345678";
     const fakeProvider = "Simulado (Dev Mode)";
@@ -420,6 +296,3 @@ window.onload = function() {
     }
 };
 </script>
-
-</body>
-</html>
