@@ -274,6 +274,66 @@
         .badge-value.negative {
             color: #ff3366;
         }
+
+        .wallet-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wallet-modal.active {
+            display: flex;
+        }
+
+        .wallet-modal-content {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .wallet-modal-content h2 {
+            margin-bottom: 15px;
+            color: #00ff88;
+        }
+
+        .wallet-modal-content p {
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .wallet-modal-content input {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .wallet-modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .wallet-modal-buttons button {
+            flex: 1;
+        }
+
+        .wallet-modal-buttons .btn-cancel {
+            background: #333;
+        }
+
+        .wallet-modal-buttons .btn-connect {
+            background: #00ff88;
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -369,6 +429,19 @@
         </div>
     </div>
 
+    <!-- Modal de Conexão de Carteira -->
+    <div class="wallet-modal" id="walletModal">
+        <div class="wallet-modal-content">
+            <h2>Conectar Carteira</h2>
+            <p>Cole seu endereço de carteira Hyperliquid para continuar</p>
+            <input type="text" id="walletInput" placeholder="0x..." value="">
+            <div class="wallet-modal-buttons">
+                <button class="btn-cancel" onclick="closeWalletModal()">Cancelar</button>
+                <button class="btn-connect" onclick="connectWallet()">Conectar</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     let chart;
     let candleSeries;
@@ -382,8 +455,8 @@
         if (wallet) {
             document.getElementById('wallet-address').innerText = `Carteira: ${wallet.substr(0, 6)}...${wallet.substr(-4)}`;
         } else {
-            alert('Você precisa conectar sua carteira na landing page primeiro!');
-            window.location.href = 'index.html';
+            document.getElementById('wallet-address').innerText = 'Carteira não conectada';
+            showWalletModal();
         }
 
         initChart();
@@ -479,11 +552,17 @@
     async function updateTraderInfo() {
         if (!selectedAsset) return;
         
+        const wallet = localStorage.getItem('hyperliquid_wallet');
+        if (!wallet) {
+            // Se não há carteira, usar dados simulados
+            return;
+        }
+
         try {
             const response = await fetch('https://api.hyperliquid.xyz/info', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'userState', user: localStorage.getItem('hyperliquid_wallet') })
+                body: JSON.stringify({ type: 'userState', user: wallet })
             });
             
             if (response.ok) {
@@ -499,7 +578,13 @@
     }
 
     function goBack() {
-        window.location.href = 'index.html';
+        // Se veio de index.html, volta para lá. Senão, fecha a aba
+        if (document.referrer && document.referrer.includes('index.html')) {
+            window.location.href = 'index.html';
+        } else {
+            window.history.back();
+        }
+    }
     }
 
     function initChart() {
@@ -582,6 +667,34 @@
         }
         candleSeries.setData(candles);
     }
+
+    // Funções de conexão de carteira
+    function showWalletModal() {
+        document.getElementById('walletModal').classList.add('active');
+    }
+
+    function closeWalletModal() {
+        document.getElementById('walletModal').classList.remove('active');
+    }
+
+    function connectWallet() {
+        const walletInput = document.getElementById('walletInput').value.trim();
+        
+        if (!walletInput) {
+            alert('Por favor, insira um endereço de carteira válido');
+            return;
+        }
+
+        if (!/^0x[a-fA-F0-9]{40}$/.test(walletInput)) {
+            alert('Endereço de carteira inválido. Deve começar com 0x e ter 40 caracteres hexadecimais');
+            return;
+        }
+
+        localStorage.setItem('hyperliquid_wallet', walletInput);
+        document.getElementById('wallet-address').innerText = `Carteira: ${walletInput.substr(0, 6)}...${walletInput.substr(-4)}`;
+        closeWalletModal();
+    }
+
 </script>
 
 </body>
