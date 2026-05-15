@@ -715,7 +715,7 @@
   </div>
   <ul class="nav-links">
     <li><span onclick="showPage('main')" id="navMain">Swap</span></li>
-    <li><span onclick="showPage('trader')" id="navTrader">Trader</span></li>
+    <li><span onclick="goToTrader()" id="navTrader">Trader</span></li>
     <li><span onclick="showPage('main')">Pool</span></li>
     <li><span onclick="showPage('main')">Bridge</span></li>
     <li><span onclick="showPage('main')">Analytics</span></li>
@@ -737,7 +737,7 @@
       <h1>Trade, Earn &<br>Bridge with <em>JDex</em></h1>
       <p class="hero-sub">A下一代 DEX agregando liquidez entre chains. Swap com melhores taxas e participe do ecossistema DeFi.</p>
       <div class="hero-actions">
-        <button class="btn-cta" onclick="showPage('trader')">
+        <button class="btn-cta" onclick="goToTrader()">
           Trade Now
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
@@ -972,6 +972,14 @@
         window.open('https://www.okx.com/web3', '_blank');
       }
     }
+  }
+
+  function goToTrader() {
+    // Se há carteira conectada, salva e redireciona
+    if (currentAccount) {
+      localStorage.setItem('hyperliquid_wallet', currentAccount);
+    }
+    window.location.href = 'trader.html';
   }
 
   async function toggleWalletConnection() {
