@@ -128,6 +128,152 @@
             font-weight: bold;
             margin: 10px 0;
         }
+
+        .platform-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .platform-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #2d2d4a;
+            color: white;
+            border: 1px solid #00ff88;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .platform-btn:hover {
+            background: #3d3d5a;
+            border-color: #00ff88;
+        }
+
+        .platform-badge {
+            display: flex;
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            margin-left: 4px;
+        }
+
+        .assets-dropdown {
+            position: relative;
+            min-width: 200px;
+        }
+
+        .dropdown-btn {
+            width: 100%;
+            padding: 10px;
+            background: #2d2d4a;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .dropdown-btn:hover {
+            background: #3d3d5a;
+            border-color: #00ff88;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #2d2d4a;
+        }
+
+        .dropdown-item:hover {
+            background: #2d2d4a;
+            color: #00ff88;
+        }
+
+        .info-badge {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 280px;
+            font-size: 12px;
+        }
+
+        .badge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #2d2d4a;
+            padding-bottom: 8px;
+        }
+
+        .badge-title {
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .badge-status {
+            display: flex;
+            width: 10px;
+            height: 10px;
+            background: #00ff88;
+            border-radius: 50%;
+        }
+
+        .badge-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #2d2d4a;
+        }
+
+        .badge-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .badge-label {
+            color: #888;
+            font-size: 11px;
+        }
+
+        .badge-value {
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .badge-value.negative {
+            color: #ff3366;
+        }
     </style>
 </head>
 <body>
@@ -145,6 +291,52 @@
     <div class="main-content">
         <div class="header-bar">
             <button class="back-btn" onclick="goBack()">← Voltar</button>
+            
+            <div class="platform-section">
+                <!-- Botão de Plataforma -->
+                <button class="platform-btn" id="platform-btn" onclick="toggleAssetDropdown()">
+                    🔗 Hyperliquid
+                    <div class="platform-badge"></div>
+                </button>
+
+                <!-- Dropdown de Ativos -->
+                <div class="assets-dropdown">
+                    <button class="dropdown-btn" id="asset-selector" onclick="toggleAssetDropdown()">
+                        <span id="selected-asset">Selecionar Ativo</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="assets-menu"></div>
+                </div>
+
+                <!-- Info Badge -->
+                <div class="info-badge" id="info-badge">
+                    <div class="badge-header">
+                        <div class="badge-title" id="badge-asset">-</div>
+                        <div class="badge-status"></div>
+                    </div>
+                    <div class="badge-info-row">
+                        <span class="badge-label">Alavancagem:</span>
+                        <span class="badge-value" id="badge-leverage">-</span>
+                    </div>
+                    <div class="badge-info-row">
+                        <span class="badge-label">PNL:</span>
+                        <span class="badge-value" id="badge-pnl">-</span>
+                    </div>
+                    <div class="badge-info-row">
+                        <span class="badge-label">Saldo:</span>
+                        <span class="badge-value" id="badge-balance">-</span>
+                    </div>
+                    <div class="badge-info-row">
+                        <span class="badge-label">Entrada Limit:</span>
+                        <span class="badge-value" id="badge-limit">-</span>
+                    </div>
+                    <div class="badge-info-row">
+                        <span class="badge-label">Entrada Mercado:</span>
+                        <span class="badge-value" id="badge-market">-</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="wallet-info" id="wallet-address">Carteira não conectada</div>
         </div>
 
@@ -180,6 +372,9 @@
 <script>
     let chart;
     let candleSeries;
+    let allAssets = [];
+    let selectedAsset = null;
+    let portfolioData = {};
 
     // Verificar se há carteira conectada
     window.onload = () => {
@@ -192,9 +387,116 @@
         }
 
         initChart();
+        loadHyperliquidAssets();
         fetchCurrentPrice();
         setInterval(fetchCurrentPrice, 5000);
+        setInterval(updateTraderInfo, 10000);
     };
+
+    // Carregar ativos da Hyperliquid via API
+    async function loadHyperliquidAssets() {
+        try {
+            const response = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'allAssets' })
+            });
+            const assets = await response.json();
+            
+            if (Array.isArray(assets)) {
+                allAssets = assets.filter(asset => asset.name).sort((a, b) => a.name.localeCompare(b.name));
+                populateAssetDropdown(allAssets);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar ativos:', error);
+        }
+    }
+
+    // Preencher dropdown com ativos
+    function populateAssetDropdown(assets) {
+        const menu = document.getElementById('assets-menu');
+        menu.innerHTML = '';
+        
+        assets.forEach(asset => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.textContent = asset.name;
+            item.onclick = () => selectAsset(asset);
+            menu.appendChild(item);
+        });
+    }
+
+    // Selecionar ativo
+    function selectAsset(asset) {
+        selectedAsset = asset;
+        document.getElementById('selected-asset').textContent = asset.name;
+        document.getElementById('assets-menu').classList.remove('active');
+        document.getElementById('badge-asset').textContent = asset.name;
+        
+        // Simular dados do trader
+        updateAssetInfo(asset);
+    }
+
+    // Atualizar informações do ativo
+    function updateAssetInfo(asset) {
+        // Simulando dados de trading - em produção viriam da API
+        const mockLeverage = (1 + Math.random() * 10).toFixed(1);
+        const mockBalance = (100 + Math.random() * 10000).toFixed(2);
+        const mockPnL = (Math.random() - 0.5) * 5000;
+        const mockLimitEntry = (1000 + Math.random() * 100000).toFixed(2);
+        const mockMarketEntry = (1000 + Math.random() * 100000).toFixed(2);
+
+        document.getElementById('badge-leverage').textContent = `${mockLeverage}x`;
+        document.getElementById('badge-balance').textContent = `$${mockBalance}`;
+        document.getElementById('badge-pnl').textContent = mockPnL >= 0 ? `+$${mockPnL.toFixed(2)}` : `-$${Math.abs(mockPnL).toFixed(2)}`;
+        document.getElementById('badge-pnl').classList.toggle('negative', mockPnL < 0);
+        document.getElementById('badge-limit').textContent = `$${mockLimitEntry}`;
+        document.getElementById('badge-market').textContent = `$${mockMarketEntry}`;
+
+        portfolioData[asset.name] = {
+            leverage: mockLeverage,
+            balance: mockBalance,
+            pnl: mockPnL,
+            limitEntry: mockLimitEntry,
+            marketEntry: mockMarketEntry
+        };
+    }
+
+    // Alternar dropdown
+    function toggleAssetDropdown() {
+        const menu = document.getElementById('assets-menu');
+        menu.classList.toggle('active');
+    }
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.assets-dropdown')) {
+            document.getElementById('assets-menu').classList.remove('active');
+        }
+    });
+
+    // Atualizar informações de trader periodicamente
+    async function updateTraderInfo() {
+        if (!selectedAsset) return;
+        
+        try {
+            const response = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'userState', user: localStorage.getItem('hyperliquid_wallet') })
+            });
+            
+            if (response.ok) {
+                const userData = await response.json();
+                // Atualizar badge com dados reais se disponíveis
+                if (userData.portfolio) {
+                    updateAssetInfo(selectedAsset);
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar info do trader:', error);
+        }
+    }
 
     function goBack() {
         window.location.href = 'index.html';
